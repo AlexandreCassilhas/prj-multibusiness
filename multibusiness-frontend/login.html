@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polifonia - Acesso</title>
+    <link rel="stylesheet" href="css/style.css"> 
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+    <div class="container login-container">
+        <header>
+            <div class="logo-circle">
+                <span class="dot"></span>
+                <span class="brand-name">polifonia</span>
+            </div>
+            <h2>Acesso ao Sistema</h2>
+        </header>
+        <form id="formLogin">
+            <div class="form-group">
+                <label>Utilizador (CPF)</label>
+                <input type="text" id="userLogin" placeholder="000.000.000-00" 
+                    oninput="mascaraCPF(this)" maxlength="14" autocomplete="username" required>
+            </div>
+
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" id="userPass" placeholder="******" autocomplete="current-password" required>
+            </div>
+
+            <div class="captcha-box">
+                <div id="captcha-img-container"></div>
+                <input type="text" id="captchaInput" placeholder="Digite o código" required>
+            </div>
+            <small id="msg-advertencia">Clique na imagem para trocar o código.</small>
+
+            <button type="submit" class="btn-finish">Entrar no Sistema</button>
+            <p id="msg-erro"></p>
+        </div>
+    </form>
+
+    <script src="js/login.js"></script>
+
+</body>
+</html>

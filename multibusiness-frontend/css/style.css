@@ -1,0 +1,553 @@
+/* Configurações Gerais */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #0b0e11; /* Fundo escuro como no logo */
+    color: white;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.container {
+    background-color: #161b22;
+    width: 100%;
+    max-width: 500px; /* Ótimo para tablets e mobile */
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* Layout do Cabeçalho */
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #30363d;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-details {
+    text-align: right;
+    line-height: 1.2;
+}
+
+.user-name {
+    display: block;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: white;
+}
+
+.user-role {
+    font-size: 0.75rem;
+    color: #8b949e;
+}
+
+.profile-img-container {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid #8b1a1a; /* Vermelho Polifonia */
+    overflow: hidden;
+    background-color: #0b0e11;
+}
+
+.profile-img-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.btn-logout {
+    background: none;
+    border: 1px solid #30363d;
+    color: #8b949e;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 2px 6px;
+    font-size: 0.8rem;
+    transition: 0.3s;
+}
+
+.btn-logout:hover {
+    color: #ff4444;
+    border-color: #ff4444;
+}
+
+/* Identidade Visual do Logo */
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.logo-circle {
+    background-color: white;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    margin: 0 auto 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.brand-name {
+    color: black;
+    font-weight: bold;
+    font-size: 1.2rem;
+    letter-spacing: -1px;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    background-color: #8b1a1a; /* O vermelho do logo */
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+/* Formulário */
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: #8b949e;
+}
+
+select, input {
+    width: 100%;
+    padding: 12px;
+    background-color: #0b0e11;
+    border: 1px solid #30363d;
+    color: white;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.row {
+    display: flex;
+    gap: 15px;
+}
+
+/* Botões de Pagamento */
+.payment-methods {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.radio-btn {
+    background-color: #21262d;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+/* Total e Ação */
+.total-section {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: right;
+    margin: 20px 0;
+    padding-top: 20px;
+    border-top: 1px solid #30363d;
+}
+
+.btn-finish {
+    width: 100%;
+    padding: 15px;
+    background-color: #8b1a1a; /* Vermelho Polifonia */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-finish:hover {
+    background-color: #a31e1e;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid #30363d;
+    margin: 20px 0;
+}
+
+.btn-secondary {
+    width: 100%;
+    margin-top: 10px;
+    padding: 15px;
+    background-color: transparent;
+    color: white;
+    border: 1px solid #8b1a1a;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 25px;
+}
+
+.btn-secondary:hover {
+    background-color: rgba(139, 26, 26, 0.1);
+}
+
+/* Tabela do Carrinho */
+.cart-section {
+    margin-bottom: 25px;
+}
+
+.cart-section h3 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    color: #8b949e;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+th {
+    text-align: left;
+    color: #8b949e;
+    border-bottom: 1px solid #30363d;
+    padding-bottom: 5px;
+}
+
+td {
+    padding: 10px 0;
+    border-bottom: 1px solid #21262d;
+}
+
+.btn-remove {
+    background: none;
+    border: none;
+    color: #ff4444;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    color: black;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.receipt-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+}
+
+#receipt-details {
+    text-align: left;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    border-top: 1px dashed #ccc;
+    padding-top: 15px;
+}
+
+/* Botões do Modal */
+.modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-whatsapp { 
+    background-color: #25D366; 
+    color: white; 
+    border: none; 
+    padding: 12px; 
+    border-radius: 5px; 
+    font-weight: bold; 
+    cursor: pointer; 
+}
+
+.btn-print { 
+    background-color: #333; 
+    color: white; 
+    border: none; 
+    padding: 12px; 
+    border-radius: 5px; 
+    font-weight: bold; 
+    cursor: pointer; 
+}
+
+.btn-close { 
+    background-color: #ccc; 
+    border: none; 
+    padding: 12px; 
+    border-radius: 5px; 
+    cursor: pointer; 
+}
+
+/* ... (Estilos anteriores) ... */
+
+.discount-global-section {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #21262d;
+    border-radius: 8px;
+}
+
+.history-section {
+    margin-top: 30px;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.btn-clear {
+    background: none;
+    border: 1px solid #444;
+    color: #8b949e;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.7rem;
+}
+
+.sale-card {
+    background-color: #161b22;
+    border-left: 4px solid #8b1a1a;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 0 8px 8px 0;
+}
+
+.sale-card p {
+    font-size: 0.85rem;
+    margin-bottom: 5px;
+}
+
+.sale-card .sale-total {
+    font-weight: bold;
+    color: white;
+    font-size: 1rem;
+}
+
+.filter-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.filter-controls input {
+    flex: 1;
+    padding: 8px;
+    font-size: 0.8rem;
+    background-color: #161b22;
+}
+
+.btn-reset-filters {
+    background: none;
+    border: 1px solid #8b1a1a;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.7rem;
+}
+
+
+.summary-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.summary-card {
+    background-color: #1c2128;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid #30363d;
+}
+
+.summary-card.highlight {
+    border-color: #8b1a1a;
+}
+
+.summary-label {
+    display: block;
+    font-size: 0.75rem;
+    color: #8b949e;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.summary-value {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: white;
+}
+
+.btn-export {
+    width: 100%;
+    background-color: #1f6feb; /* Azul corporativo para exportação */
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.btn-export:hover {
+    background-color: #388bfd;
+}
+
+/* ... (Manter estilos anteriores) ... */
+
+.sale-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+/* Estilo do Botão de Editar (Vazado) */
+.btn-edit {
+    background: none;
+    border: 1px solid #1f6feb;
+    color: #1f6feb;
+    padding: 5px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.6rem;
+    font-weight: bold;
+}
+
+.btn-edit:hover {
+    /* background-color: rgba(31, 111, 235, 0.1); */
+    background-color: #1f6feb;
+    color: #ffffff;
+    box-shadow: 0 0 8px rgba(31, 111, 235, 0.1);
+}
+
+/* Estilo do Botão de Excluir (Vazado) */
+.btn-delete {
+    background: transparent;
+    border: 1px solid #da3633; /* Vermelho alerta */
+    color: #da3633;
+    padding: 5px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.7rem;
+    line-height: 1;
+    margin-left: 0px;
+}
+
+/* Efeito Hover: Preenche o fundo e muda a cor do ícone */
+.btn-delete:hover {
+    background: #da3633;
+    color: #ffffff;
+    box-shadow: 0 0 8px rgba(218, 54, 51, 0.4);
+}
+
+/* ... (Estilos anteriores) ... */
+
+.analytics-section {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 2px solid #30363d;
+}
+
+.chart-box {
+    background-color: #161b22;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #30363d;
+}
+
+.chart-box h4 {
+    color: #8b949e;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+canvas {
+    max-width: 100%;
+    height: auto !important;
+}
+
+
+
+/* Ajuste mobile */
+@media (max-width: 480px) {
+    .user-details { display: none; } /* Esconde nomes em telas muito pequenas */
+
+    /* Responsividade Mobile para a Tabela */
+     th:nth-child(1), td:nth-child(1) { width: 50%; }
+    .total-section { font-size: 1.2rem; }
+
+    /* Responsividade para Telas Pequenas */
+    .container {
+        padding: 15px;
+    }
+    .row {
+        flex-direction: column;
+    }
+
+    /* Ajuste mobile para os filtros */
+    .filter-controls {
+        flex-direction: column;
+    }
+
+}
+
+
+
+
+

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Polifonia - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container" style="max-width: 1200px;"> <header class="main-header">
+            <div class="header-brand">
+                <div class="logo-circle"><span class="dot"></span><span class="brand-name">polifonia</span></div>
+            </div>
+            <div class="user-profile">
+                <span id="welcomeMsg">Olá, Admin</span>
+                <button class="btn-logout" onclick="logout()">Sair</button>
+            </div>
+        </header>
+
+        <h3 style="margin-bottom: 15px;">Módulos</h3>
+        <nav class="menu-grid">
+            <a href="venda.html" class="menu-card">
+                <h3>🛒 PDV</h3>
+                <p>Frente de Caixa</p>
+            </a>
+            <a href="admin.html" class="menu-card">
+                <h3>👥 Usuários</h3>
+                <p>Gestão de Equipe</p>
+            </a>
+            <a href="financeiro.html" class="menu-card">
+                <h3>💰 Livro Caixa</h3>
+                <p>Gestão Financeira</p>
+            </a>
+            <a href="estoque.html" class="menu-card">
+                <h3>📦 Estoque</h3>
+                <p>Gestão de Produtos</p>
+            </a>
+        </nav>
+
+        <h3 id="title-1">
+    ⚡ Performance Hoje
+        </h3>
+        <div class="kpi-grid">
+            <div class="kpi-card highlight">
+                <span class="kpi-label">Faturamento Hoje</span>
+                <span class="kpi-value" id="kpiTotal">R$ 0,00</span>
+            </div>
+            <div class="kpi-card" style="border-left-color: #238636;">
+                <span class="kpi-label">Lucro Presumido</span>
+                <span class="kpi-value" id="kpiLucro">R$ 0,00</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">Vendas Realizadas</span>
+                <span class="kpi-value" id="kpiCount">0</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">Ticket Médio</span>
+                <span class="kpi-value" id="kpiTicket">R$ 0,00</span>
+            </div>
+        </div>
+
+        <h3 id="title-2">
+            📊 Gestão Interna (Período Selecionado)
+        </h3>
+        <div class="kpi-grid">
+            <div class="kpi-card" style="border-left-color: #d29922; cursor: pointer;" onclick="mostrarDetalhesEstoque()">
+                <span class="kpi-label">Itens Abaixo do Mínimo</span>
+                <span class="kpi-value" id="kpiEstoque">0</span>
+            </div>
+
+            <div class="kpi-card" id="cardSaldo" style="border-left-color: #722ed1;">
+                <span class="kpi-label">Saldo Livro Caixa</span>
+                <span class="kpi-value" id="kpiSaldo">R$ 0,00</span>
+                <small id="subSaldo" style="font-size: 0.75rem; color: #8b949e; margin-top: 5px; display: block;"></small>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <span style="font-weight: bold; color: #8b949e;">Filtrar Rankings:</span>
+            <input type="date" id="dashInicio" class="input-dark" style="width: auto;">
+            <span style="color: #8b949e;">até</span>
+            <input type="date" id="dashFim" class="input-dark" style="width: auto;">
+            <button class="btn-finish" onclick="fetchDashboardData()" style="width: auto; padding: 8px 15px;">Atualizar Gráficos</button>
+        </div>
+
+        <div class="charts-container">
+            <div class="chart-box">
+                <h4>🏆 Ranking de Vendedores</h4>
+                <canvas id="sellerChart"></canvas>
+            </div>
+            <div class="chart-box">
+                <h4>📦 Top 5 Produtos (Qtd)</h4> <canvas id="productsChart"></canvas>
+            </div>
+            <div class="chart-box">
+                <h4>📈 Evolução (7 Dias)</h4>
+                <canvas id="weekChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/dashboard.js"></script>
+    
+</body>
+</html>

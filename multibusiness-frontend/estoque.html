@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Polifonia - Estoque</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/estoque.css">
+</head>
+<body>
+    <div class="container">
+        <header class="main-header">
+            <div class="header-brand">
+                <div class="logo-circle"><span class="dot"></span><span class="brand-name">polifonia</span></div>
+            </div>
+            <div class="user-profile">
+                <span id="userNameDisplay">Carregando...</span>
+                <button class="btn-logout" onclick="window.location.href='dashboard.html'">Voltar ao Dashboard</button>
+            </div>
+        </header>
+
+        <div class="stock-header">
+            <h2>Gestão de Estoque</h2>
+            <button class="btn-finish" style="width: auto;" onclick="openProductModal()">+ Novo Produto</button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('lista')">📦 Produtos</button>
+            <button class="tab-btn" onclick="switchTab('entrada')">🚛 Entrada de Estoque</button>
+            <button class="tab-btn" onclick="switchTab('abc')" 
+                title="Metodologia de Pareto (80/20):&#010;🟢 Classe A: Alta Importância (80% do Faturamento)&#010;🟡 Classe B: Média Importância (15% do Faturamento)&#010;⚫ Classe C: Baixa Importância (5% do Faturamento)">
+                📊 Curva ABC ℹ️
+            </button>
+        </div>
+
+        <div id="tab-lista" class="tab-content active">
+            <table id="products-table">
+                <thead>
+                    <tr>
+                        <th>IMG</th>
+                        <th>Nome</th>
+                        <th>Preço (R$)</th>
+                        <th>Custo (R$)</th>
+                        <th>Estoque</th>
+                        <th>Classe ABC</th>
+                    </tr>
+                </thead>
+                <tbody id="products-body">
+                    </tbody>
+            </table>
+        </div>
+
+        <div id="tab-entrada" class="tab-content">
+            <div class="form-group">
+                <h3>Registrar Entrada de Mercadoria</h3>
+                <p id="nota">Use esta tela quando chegarem novas peças da fábrica.</p>
+                
+                <label>Selecione o Produto</label>
+                <select id="entryProductSelect"></select>
+                
+                <div class="row" style="margin-top: 15px;">
+                    <div class="form-group">
+                        <label>Quantidade Recebida</label>
+                        <input type="number" id="entryQty" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Novo Custo Unitário (R$)</label>
+                        <input type="number" id="entryCost" step="0.01" required>
+                    </div>
+                </div>
+
+                <button class="btn-finish" onclick="saveStockEntry()">Confirmar Entrada</button>
+            </div>
+        </div>
+
+        <div id="tab-abc" class="tab-content">
+            <h3>Classificação ABC Automática</h3>
+            <p id="nota">O sistema analisará o volume de vendas no período selecionado e classificará os produtos.</p>
+            
+            <div class="abc-controls">
+                <div class="form-group" style="flex: 1;">
+                    <label>Data Início</label>
+                    <input type="date" id="abcStart">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Data Fim</label>
+                    <input type="date" id="abcEnd">
+                </div>
+                <button class="btn-secondary" style="margin-bottom: 25px;" onclick="calculateABC()">🔄 Executar Classificação</button>
+            </div>
+            
+            <div id="abc-result-msg"></div>
+        </div>
+    </div>
+
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <h3 style="color: aliceblue;">Cadastrar / Editar Produto</h3>
+
+            <input type="hidden" id="prodId">
+            
+            <div class="form-group">
+                <label>Nome do Produto</label>
+                <input type="text" id="prodName">
+            </div>
+
+            <div class="form-group">
+                <label>Descrição Detalhada</label>
+                <textarea id="prodDesc" rows="2">
+                </textarea>
+            </div>
+            
+            <div class="row">
+                <div class="form-group">
+                    <label>Preço Venda (R$)</label>
+                    <input type="number" id="prodPrice" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Custo (CPV) (R$)</label>
+                    <input type="number" id="prodCost" step="0.01">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Estoque Mínimo (Alerta)</label>
+                <input type="number" id="prodMinStock" value="5">
+            </div>
+
+            <input type="text" id="prodCode">
+
+            <div class="form-group">
+                <label>Imagens (Até 4)</label>
+                <div class="image-upload-grid" id="imageGrid">
+                    <div class="img-slot" onclick="triggerFile(0)"><span id="span-0">+</span><img id="img-0" style="display:none"></div>
+                    <div class="img-slot" onclick="triggerFile(1)"><span id="span-1">+</span><img id="img-1" style="display:none"></div>
+                    <div class="img-slot" onclick="triggerFile(2)"><span id="span-2">+</span><img id="img-2" style="display:none"></div>
+                    <div class="img-slot" onclick="triggerFile(3)"><span id="span-3">+</span><img id="img-3" style="display:none"></div>
+                </div>
+                <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(this)">
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-finish" onclick="saveProduct()">Salvar Produto</button>
+                <button class="btn-close" onclick="closeProductModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/estoque.js"></script>
+</body>
+</html>

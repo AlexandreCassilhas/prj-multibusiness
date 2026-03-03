@@ -1,0 +1,115 @@
+#title-1 {
+    margin: 25px 0 15px 0; 
+    color: #8b949e; 
+    font-size: 0.9rem; 
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+}
+
+#title-2 {
+    margin: 35px 0 15px 0; 
+    color: #8b949e; 
+    font-size: 0.9rem; 
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+}
+
+
+/* Estilos específicos do Dashboard */
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.menu-card {
+    background: #161b22;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #30363d;
+    cursor: pointer;
+    transition: 0.3s;
+    text-decoration: none;
+    color: white;
+}
+
+.menu-card:hover { 
+    transform: translateY(-5px); 
+    border-color: #8b1a1a; 
+}
+
+.menu-card h3 { 
+    color: #8b1a1a; 
+    margin-bottom: 10px; 
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.kpi-card {
+    background: linear-gradient(145deg, #161b22, #0d1117);
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 5px solid #1f6feb;
+}
+
+.kpi-card.highlight { 
+    border-left-color: #8b1a1a; 
+}
+
+.kpi-value { 
+    font-size: 1.8rem; 
+    font-weight: bold; 
+    display: block; 
+    margin-top: 5px; 
+}
+
+.kpi-label { 
+    font-size: 0.8rem; 
+    color: #8b949e; 
+    text-transform: uppercase; 
+}
+
+/* REORGANIZAÇÃO DOS GRÁFICOS: Agora em grid flexível para 3 itens */
+.charts-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+/* Seção de Filtros */
+.filter-section {
+    background: #161b22;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #30363d;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+/* No seu dashboard.css */
+.kpi-grid {
+    display: grid;
+    /* Isso garante que ele tente colocar 4 colunas, mas se ajuste se houver menos */
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+/* Ajuste para o card de saldo se destacar mais na segunda grid */
+#cardSaldo {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+@media (max-width: 768px) { .charts-container { grid-template-columns: 1fr; } }

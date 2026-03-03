@@ -1,0 +1,64 @@
+
+.container {
+  max-width: 1000px;"
+}
+
+.photo-preview { 
+  width: 80px; 
+  height: 80px; 
+  border-radius: 50%; 
+  border: 2px solid #8b1a1a; 
+  object-fit: cover; 
+  margin-top: 10px; 
+  display: none; 
+}
+
+.form-grid { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 15px; 
+}
+
+.team-header { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-bottom: 20px; 
+}
+
+.btn-finish {
+  width: auto;
+}
+
+/* Estilo do botão de exclusão que você escolheu 
+.btn-delete-x {
+    background: transparent;
+    border: 1px solid #da3633; 
+    color: #da3633;
+    padding: 4px 9px; 
+    border-radius: 4px; 
+    cursor: pointer;
+    transition: all 0.3s; 
+    font-size: 0.8rem; 
+    font-weight: bold; 
+    margin-left: 5px;
+}
+
+.btn-delete-x:hover { 
+  background: #da3633; 
+  color: white; 
+}
+*/
+/* Estilos da tela modal */
+.modal-content {
+  background-color: #161b22; 
+  max-width: 600px;
+}
+
+#modalTitle {
+  color: aliceblue;
+}
+
+#senhaHelp {
+  color: #8b949e; display: none;
+}

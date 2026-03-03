@@ -1,0 +1,52 @@
+/* CSS do modal de Editar Venda */
+
+#edit-venda {
+  background-color: #161b22;
+}
+
+h3.titulo-modal {
+  color: #ccc;
+  padding-bottom: 10px;
+}
+
+#edit-buyer-name {
+  color: rgb(242, 240, 240); 
+  border: 1px solid #ccc;
+}
+
+#edit-total-value {
+   color: rgb(242, 240, 240); 
+   border: 1px solid #ccc;
+}
+
+/* Configuração de Impressão */
+@media print {
+    body * {
+        display: none;
+    }
+    #btn-dash {
+        display: none;
+    }
+    #receipt-modal, #receipt-modal * {
+        display: block;
+    }
+    #receipt-modal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        background: white;
+    }
+    .modal-actions {
+        display: none !important;
+    }
+}
+
+/*
+@media print {
+    body * { visibility: hidden; }
+    #btn-dash { visibility: hidden;}
+    #receipt-modal, #receipt-modal * { visibility: visible; }
+    #receipt-modal { position: absolute; left: 0; top: 0; background: white; }
+    .modal-actions { display: none; }
+}
+  */ 

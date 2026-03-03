@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polifonia - PDV</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/venda.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <header class="main-header">
+            <div class="header-brand">
+                <div class="logo-circle">
+                    <span class="dot"></span>
+                    <span class="brand-name">polifonia</span>
+                </div>
+            </div>
+
+            <div class="user-profile" id="userProfileArea">
+                <div class="user-details">
+                    <span id="userNameDisplay" class="user-name">Carregando...</span>
+                    <span id="userRoleDisplay" class="user-role">Perfil</span>
+                </div>
+                <div class="profile-img-container">
+                    <img id="userPhotoDisplay" src="https://via.placeholder.com/40" alt="Foto">
+                </div>
+                <button class="btn-logout" onclick="logout()" title="Sair do Sistema">✕</button>
+            </div>
+        </header>
+
+        <main>
+            <div class="form-group">
+                <label for="buyerName">Nome do Comprador</label>
+                <input type="text" id="buyerName" value="Comprador">
+            </div>
+
+            <hr>
+
+            <div class="form-group">
+                <label for="product">Produto</label>
+                <select id="product" onchange="updatePrice()">
+                    <option value="0" data-name="" data-custo="0">Selecione um item...</option>
+                </select>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label for="quantity">Qtd</label>
+                    <input type="number" id="quantity" value="1" min="1">
+                </div>
+                <div class="form-group">
+                    <label for="price">Preço Unit. (R$)</label>
+                    <input type="number" id="price" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="discount">Desc. (R$)</label>
+                    <input type="number" id="discount" value="0" step="0.01">
+                </div>
+            </div>
+
+            <button class="btn-secondary" onclick="addToCart()">Adicionar ao Carrinho</button>
+
+            <section class="cart-section">
+                <h3>Carrinho</h3>
+                <div id="cart-container">
+                    <table id="cart-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Qtd</th>
+                                <th>Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="cart-body">
+                            </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div class="form-group">
+                <label>Forma de Pagamento</label>
+                <div class="payment-methods">
+                    <label class="radio-btn"><input type="radio" name="payment" value="crédito"> Crédito</label>
+                    <label class="radio-btn"><input type="radio" name="payment" value="débito"> Débito</label>
+                    <label class="radio-btn"><input type="radio" name="payment" value="pix"> PIX</label>
+                    <label class="radio-btn"><input type="radio" name="payment" value="dinheiro"> Dinheiro</label>
+                </div>
+            </div>
+
+            <div class="discount-global-section">
+                <label for="globalDiscount">Desconto Global no Total (R$)</label>
+                <input type="number" id="globalDiscount" value="0" step="0.01" oninput="renderCart()">
+            </div>
+
+            <div class="total-section">
+                <span>Total Geral: R$ <span id="grand-total">0,00</span></span>
+            </div>
+
+            <button class="btn-finish" onclick="finishSale()">Concluir Venda</button>
+
+            <hr>
+
+            <section class="history-section">
+              <div class="history-header">
+                  <h3>Histórico de Vendas</h3>
+                  <button class="btn-clear" onclick="clearHistory()">Limpar Tudo</button>
+              </div>
+
+              <div class="filter-controls">
+                  <input type="text" id="filterName" placeholder="Filtrar por cliente..." oninput="renderHistory()">
+                  <input type="date" id="filterDate" onchange="renderHistory()">
+                  <button class="btn-reset-filters" onclick="resetFilters()">Limpar Filtros</button>
+              </div>
+
+              <div id="sales-history-list">
+              </div>
+            </section>
+
+
+            <div class="summary-container">
+                <div class="summary-card">
+                    <span class="summary-label">Vendas Encontradas</span>
+                    <span id="summary-count" class="summary-value">0</span>
+                </div>
+                <div class="summary-card highlight">
+                    <span class="summary-label">Total no Período</span>
+                    <span id="summary-total" class="summary-value">R$ 0,00</span>
+                </div>
+            </div>
+
+            <button class="btn-export" onclick="exportToCSV()">💾 Exportar Histórico para Excel (CSV)</button>
+
+            <div id="sales-history-list">
+            </div>
+
+            <section class="analytics-section">
+                <h3>Análise de Desempenho</h3>
+                
+                <div class="chart-box">
+                    <h4>Vendas por Hora (Hoje)</h4>
+                    <canvas id="todayChart"></canvas>
+                </div>
+
+                <div class="chart-box">
+                    <h4>Evolução Diária</h4>
+                    <div class="filter-controls">
+                        <input type="date" id="chartStart">
+                        <input type="date" id="chartEnd">
+                        <button class="btn-edit" onclick="renderAnalytics()">Atualizar Gráfico</button>
+                    </div>
+                    <canvas id="periodChart"></canvas>
+                </div>
+            </section>
+            <button class="btn-logout show-btn-dash" id="btn-dash" style="float: right;" onclick="window.location.href='dashboard.html'">Voltar ao Dashboard</button>
+       </main>
+    </div>
+
+    <div id="receipt-modal" class="modal">
+        <div class="modal-content">
+            <div class="receipt-header">
+                <span class="dot"></span>
+                <strong id="polifonia">POLIFONIA</strong>
+            </div>
+            <div id="receipt-details">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-whatsapp" onclick="sendWhatsApp()">Enviar WhatsApp</button>
+                <button class="btn-print" onclick="window.print()">Imprimir</button>
+                <button class="btn-close" onclick="closeModal()">Novo Pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="modal">
+        <div id="edit-venda" class="modal-content">
+            <h3 class="titulo-modal">Editar Venda</h3>
+            <input type="hidden" id="edit-sale-id"> 
+            <div class="form-group" style="text-align: left;">
+                <label>Nome do Comprador</label>
+                <input type="text" id="edit-buyer-name">
+            </div>
+
+            <div class="form-group" style="text-align: left;">
+                <label>Valor Total (R$)</label>
+                <input type="number" id="edit-total-value" step="0.01">
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-finish" onclick="saveEdit()">Salvar Alterações</button>
+                <button class="btn-close" onclick="closeEditModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/script-venda.js"></script>
+</body>
+</html>

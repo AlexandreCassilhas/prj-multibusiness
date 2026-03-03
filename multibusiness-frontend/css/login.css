@@ -1,0 +1,37 @@
+/* Configurações Específicas - Login */
+
+.login-container { 
+  max-width: 350px; 
+  margin-top: 20px; 
+}
+
+.captcha-box { 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  margin: 15px 0; 
+  background: white; 
+  border-radius: 5px; 
+  padding: 5px;
+}
+
+.captcha-img { 
+  cursor: pointer; 
+  height: 50px;
+}
+
+#captchaInput {
+  color: rgb(115, 113, 113);
+}
+
+#msg-advertencia {
+  color: #8b949e; 
+  display: block; 
+  margin-bottom: 15px;
+}
+
+#msg-erro {
+  color: #ff4444; 
+  margin-top: 15px; 
+  font-size: 0.8rem;
+}

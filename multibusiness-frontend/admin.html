@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polifonia - Gestão de Equipe</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <div class="container">
+        <header class="main-header">
+            <div class="header-brand">
+                <div class="logo-circle"><span class="dot"></span><span class="brand-name">polifonia</span></div>
+            </div>
+            <div class="user-profile">
+                <span id="userNameDisplay">Carregando...</span>
+                <button class="btn-logout" onclick="window.location.href='dashboard.html'">Voltar ao Dashboard</button>
+            </div>
+        </header>
+
+        <div class="team-header">
+            <h2>Gestão de Equipe</h2>
+            <button class="btn-finish" onclick="openUserModal()">+ Novo Membro</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>Nome</th>
+                    <th>Perfil</th>
+                    <th>CPF (Login)</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="users-body">
+                </tbody>
+        </table>
+    </div>
+
+    <div id="user-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Cadastrar Novo Usuário</h3>
+            <form id="formCadastro">
+                <input type="hidden" id="userId"> <div class="form-group">
+                    <label>Nome Completo</label>
+                    <input type="text" id="regNome" required>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="regEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Celular</label>
+                        <input type="text" id="regCelular" oninput="mascaraCelular(this)" maxlength="15" required>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>CPF (Login)</label>
+                        <input type="text" id="regCPF" oninput="mascaraCPF(this)" maxlength="14" required>
+                    </div>
+                    <div class="form-group">
+                        <label id="labelSenha">Senha Provisória</label>
+                        <input type="password" id="regSenha" placeholder="******">
+                        <small id="senhaHelp">Deixe em branco para manter a atual.</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Foto de Perfil</label>
+                    <input type="file" id="regFoto" accept=".jpg, .jpeg" onchange="validarImagem(this)">
+                    <img id="preview" class="photo-preview">
+                </div>
+
+                <div class="form-group">
+                    <label>Perfil de Acesso</label>
+                    <select id="regPerfil">
+                        <option value="2">Vendedor</option>
+                        <option value="1">Administrador</option>
+                    </select>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn-finish">Salvar Membro</button>
+                    <button type="button" class="btn-close" onclick="closeUserModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>
