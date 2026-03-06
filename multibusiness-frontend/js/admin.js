@@ -99,6 +99,8 @@ document.getElementById('formCadastro').onsubmit = async (e) => {
     }
     
     const id = document.getElementById('userId').value;
+    const vSenha = document.getElementById('regSenha').value;
+    const confirma = document.getElementById('regSenhaConfirma').value;
 
     // Pega dados do administrador logado para auditoria
     const adminData = JSON.parse(localStorage.getItem('polifonia_user'));
@@ -108,11 +110,25 @@ document.getElementById('formCadastro').onsubmit = async (e) => {
         email: document.getElementById('regEmail').value,
         celular: document.getElementById('regCelular').value,
         cpf: cpfLimpo,
-        senha: document.getElementById('regSenha').value,
+        senha: vSenha,
         foto: fotoBase64,
         perfil_id: document.getElementById('regPerfil').value,
         solicitantePerfis: adminData.perfis
     };
+
+    
+        // 1. Validação de igualdade
+        if (vSenha !== confirma) {
+            alert("As senhas não coincidem!");
+            return;
+        }
+      
+        // 2. Validação de força (apenas se for novo usuário ou se estiver trocando a senha)
+        if (vSenha && !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/.test(vSenha)) {
+            alert("A senha deve ter no mínimo 8 caracteres, incluindo maiúsculas, números e símbolos.");
+            return;
+        }
+
 
     const method = id ? 'PUT' : 'POST';
     const url = id ? `http://localhost:3000/usuarios/${id}` : 'http://localhost:3000/usuarios';
@@ -226,5 +242,38 @@ function validarCPF(cpf) {
     if (resto !== parseInt(cpf.substring(10, 11))) return false;
     
     return true;
+}
+
+function verificarForcaSenha(senha) {
+    const wrapper = document.getElementById('password-strength-wrapper');
+    const bar = document.getElementById('strength-bar');
+    const text = document.getElementById('strength-text');
+
+    if (!senha) {
+        wrapper.style.display = 'none';
+        return;
+    }
+
+    wrapper.style.display = 'block';
+    let forca = 0;
+
+    if (senha.length >= 8) forca += 25;
+    if (/[A-Z]/.test(senha)) forca += 25;
+    if (/[a-z]/.test(senha)) forca += 15;
+    if (/[0-9]/.test(senha)) forca += 15;
+    if (/[@$!%*?&#]/.test(senha)) forca += 20;
+
+    bar.style.width = forca + '%';
+
+    if (forca < 50) {
+        bar.style.backgroundColor = '#da3633'; // Vermelho
+        text.innerText = "Senha Fraca";
+    } else if (forca < 80) {
+        bar.style.backgroundColor = '#d29922'; // Amarelo
+        text.innerText = "Senha Média";
+    } else {
+        bar.style.backgroundColor = '#238636'; // Verde
+        text.innerText = "Senha Forte";
+    }
 }
 

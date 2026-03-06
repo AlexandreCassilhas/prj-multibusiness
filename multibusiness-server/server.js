@@ -103,55 +103,27 @@ app.post('/login', (req, res) => {
     });
 });
 
-/*
-// Rota de LOGIN com Bcrypt e Validação de Captcha
-app.post('/login', (req, res) => {
-    const { login, senha, captcha } = req.body; // 'login' aqui receberá o CPF vindo do frontend
+// --- GESTÃO DE EQUIPE (ADMIN) ---
 
-    if (!captcha || captcha.toLowerCase() !== sessionCaptcha) {
-        return res.status(401).send({ message: "Código CAPTCHA incorreto!" });
-    }
+// --- FUNÇÃO DE VALIDAÇÃO DE SENHA FORTE ---
+function eSenhaForte(senha) {
+    // Mínimo 8 caracteres, pelo menos uma maiúscula, uma minúscula, um número e um símbolo
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+    return regex.test(senha);
+}
 
-    // 2. Buscar usuário considerando a exclusão lógica
-    const query = `
-        SELECT u.*, p.nome_perfil 
-        FROM usuarios u
-        JOIN usuario_perfis up ON u.id = up.usuario_id
-        JOIN perfis p ON p.id = up.perfil_id
-        WHERE u.cpf = ? AND u.indicativo_exclusao = FALSE`;
-
-    db.query(query, [login.replace(/[^\d]+/g, '')], async (err, results) => {
-        if (err) return res.status(500).send(err);
-        
-        if (results.length > 0) {
-            const usuario = results[0];
-            const senhaValida = await bcrypt.compare(senha, usuario.senha);
-
-            if (senhaValida) {
-                res.send({ 
-                    auth: true, 
-                    user: usuario.nome, 
-                    foto: usuario.foto_perfil,
-                    perfis: usuario.perfis.split(',') 
-                });
-            } else {
-                res.status(401).send({ message: "Senha incorreta!" });
-            }
-        } else {
-            res.status(401).send({ message: "CPF não encontrado!" });
-        }
-    });
-});
-
-*/
-
-// --- ROTA DE CADASTRO DE USUÁRIOS (COM AUDITORIA) ---
+// 1. Rota de CADASTRO DE USUÁRIOS (COM AUDITORIA) ---
 app.post('/usuarios', async (req, res) => {
     const { nome, email, celular, cpf, senha, foto, perfil_id, solicitantePerfis } = req.body;
 
     // Verificação de segurança: apenas Admins cadastram
     if (!solicitantePerfis || !solicitantePerfis.includes('Administrador')) {
         return res.status(403).send({ message: "Acesso negado. Apenas administradores podem criar utilizadores." });
+    }
+
+    // Chama o validador de senha
+    if (!eSenhaForte(senha)) {
+        return res.status(400).send({ message: "A senha não atende aos requisitos de segurança." });
     }
 
     try {
@@ -177,7 +149,81 @@ app.post('/usuarios', async (req, res) => {
     } catch (e) { res.status(500).send(e); }
 });
 
-// 3. Rota para BUSCAR todas as vendas (GET)
+// 2. Listar Usuários Ativos
+app.get('/usuarios', (req, res) => {
+    const query = `
+        SELECT u.id, u.nome, u.email, u.celular, u.cpf, u.foto_perfil, p.nome_perfil, p.id as perfil_id
+        FROM usuarios u
+        JOIN usuario_perfis up ON u.id = up.usuario_id
+        JOIN perfis p ON p.id = up.perfil_id
+        WHERE u.indicativo_exclusao = FALSE
+        ORDER BY u.nome ASC`;
+
+    db.query(query, (err, results) => {
+        if (err) return res.status(500).send(err);
+        res.send(results);
+    });
+});
+
+// 3. Atualizar Usuário (PUT)
+app.put('/usuarios/:id', async (req, res) => {
+    const { id } = req.params;
+    const { nome, email, celular, cpf, senha, foto, perfil_id } = req.body;
+
+    // Se a senha foi enviada para alteração, validamos
+    if (senha && !eSenhaForte(senha)) {
+        return res.status(400).send({ message: "A nova senha é muito fraca." });
+    }
+
+    try {
+        // Se a senha foi enviada, gera novo hash, senão mantém a antiga
+        let sqlUser;
+        let paramsUser;
+
+        if (senha && senha.trim() !== "") {
+            const hash = await bcrypt.hash(senha, saltRounds);
+            sqlUser = "UPDATE usuarios SET nome=?, email=?, celular=?, cpf=?, senha=?, foto_perfil=? WHERE id=?";
+            paramsUser = [nome, email, celular, cpf, hash, foto, id];
+        } else {
+            sqlUser = "UPDATE usuarios SET nome=?, email=?, celular=?, cpf=?, foto_perfil=? WHERE id=?";
+            paramsUser = [nome, email, celular, cpf, foto, id];
+        }
+
+        db.beginTransaction(err => {
+            if (err) return res.status(500).send(err);
+
+            db.query(sqlUser, paramsUser, (err1) => {
+                if (err1) return db.rollback(() => res.status(500).send(err1));
+
+                // Atualiza o perfil na tabela vinculada
+                const sqlPerfil = "UPDATE usuario_perfis SET perfil_id = ? WHERE usuario_id = ?";
+                db.query(sqlPerfil, [perfil_id, id], (err2) => {
+                    if (err2) return db.rollback(() => res.status(500).send(err2));
+
+                    db.commit(err => {
+                        if (err) return db.rollback(() => res.status(500).send(err));
+                        res.send({ message: "Usuário atualizado com sucesso!" });
+                    });
+                });
+            });
+        });
+    } catch (e) { res.status(500).send(e); }
+});
+
+// 4. Exclusão Lógica de Usuário (Soft Delete)
+app.delete('/usuarios/:id', (req, res) => {
+    const { id } = req.params;
+    const query = "UPDATE usuarios SET indicativo_exclusao = TRUE WHERE id = ?";
+
+    db.query(query, [id], (err, result) => {
+        if (err) return res.status(500).send(err);
+        res.send({ message: "Usuário removido da equipe!" });
+    });
+});
+
+// ROTAS DE VENDAS
+
+// 1. Rota para BUSCAR todas as vendas (GET)
 app.get('/vendas', (req, res) => {
     const query = "SELECT * FROM vendas ORDER BY created_at DESC";
     
@@ -195,7 +241,7 @@ app.get('/vendas', (req, res) => {
 });
 
 
-// 4. Rota para REMOVER uma venda (DELETE)
+// 2. Rota para REMOVER uma venda (DELETE)
 app.delete('/vendas/:id', (req, res) => {
     const { id } = req.params;
     const query = "DELETE FROM vendas WHERE id = ?";
@@ -206,7 +252,8 @@ app.delete('/vendas/:id', (req, res) => {
     });
 });
 
-// 5. Rota para ATUALIZAR uma venda (PUT)
+
+// 3. Rota para ATUALIZAR uma venda (PUT)
 app.put('/vendas/:id', (req, res) => {
     const { id } = req.params;
     const { comprador, total } = req.body;
@@ -221,7 +268,7 @@ app.put('/vendas/:id', (req, res) => {
 });
 
 
-// 6. Rota de DADOS DO DASHBOARD (GET /dashboard-data)
+// -- Rota de DADOS DO DASHBOARD (GET /dashboard-data)
 // Rota Dashboard Corrigida
 app.get('/dashboard-data', async (req, res) => {
     const inicio = req.query.inicio || new Date(new Date().setDate(1)).toISOString().split('T')[0];
@@ -310,6 +357,7 @@ app.get('/dashboard-data', async (req, res) => {
 });
 
 // --- MÓDULO DE ESTOQUE ---
+
 // 1. Cadastrar Produto (Atualizado para incluir código de barras)
 app.post('/produtos', (req, res) => {
     const { nome, descricao, preco, custo, estoque_min, imagens, codigo } = req.body;
@@ -368,7 +416,7 @@ app.delete('/produtos/:id', (req, res) => {
 });
 
 
-// 3. Dar Entrada no Estoque (Rota Inteligente)
+// 4. Dar Entrada no Estoque (Rota Inteligente)
 app.post('/estoque/entrada', (req, res) => {
     const { produto_id, quantidade, novo_custo } = req.body;
 
@@ -412,7 +460,7 @@ app.post('/estoque/entrada', (req, res) => {
     });
 });
 
-// 4. Nova Rota de Venda Unificada (Com Baixa de Estoque e Histórico JSON)
+// 5. Nova Rota de Venda Unificada (Com Baixa de Estoque e Histórico JSON)
 app.post('/vendas', (req, res) => {
     const { comprador, vendedor, itens, pagamento, total } = req.body;
     
@@ -504,76 +552,6 @@ app.post('/estoque/calcular-abc', (req, res) => {
     });
 });
 
-// --- GESTÃO DE EQUIPE (ADMIN) ---
-
-// 1. Listar Usuários Ativos
-app.get('/usuarios', (req, res) => {
-    const query = `
-        SELECT u.id, u.nome, u.email, u.celular, u.cpf, u.foto_perfil, p.nome_perfil, p.id as perfil_id
-        FROM usuarios u
-        JOIN usuario_perfis up ON u.id = up.usuario_id
-        JOIN perfis p ON p.id = up.perfil_id
-        WHERE u.indicativo_exclusao = FALSE
-        ORDER BY u.nome ASC`;
-
-    db.query(query, (err, results) => {
-        if (err) return res.status(500).send(err);
-        res.send(results);
-    });
-});
-
-// 2. Atualizar Usuário (PUT)
-app.put('/usuarios/:id', async (req, res) => {
-    const { id } = req.params;
-    const { nome, email, celular, cpf, senha, foto, perfil_id } = req.body;
-
-    try {
-        // Se a senha foi enviada, gera novo hash, senão mantém a antiga
-        let sqlUser;
-        let paramsUser;
-
-        if (senha && senha.trim() !== "") {
-            const hash = await bcrypt.hash(senha, saltRounds);
-            sqlUser = "UPDATE usuarios SET nome=?, email=?, celular=?, cpf=?, senha=?, foto_perfil=? WHERE id=?";
-            paramsUser = [nome, email, celular, cpf, hash, foto, id];
-        } else {
-            sqlUser = "UPDATE usuarios SET nome=?, email=?, celular=?, cpf=?, foto_perfil=? WHERE id=?";
-            paramsUser = [nome, email, celular, cpf, foto, id];
-        }
-
-        db.beginTransaction(err => {
-            if (err) return res.status(500).send(err);
-
-            db.query(sqlUser, paramsUser, (err1) => {
-                if (err1) return db.rollback(() => res.status(500).send(err1));
-
-                // Atualiza o perfil na tabela vinculada
-                const sqlPerfil = "UPDATE usuario_perfis SET perfil_id = ? WHERE usuario_id = ?";
-                db.query(sqlPerfil, [perfil_id, id], (err2) => {
-                    if (err2) return db.rollback(() => res.status(500).send(err2));
-
-                    db.commit(err => {
-                        if (err) return db.rollback(() => res.status(500).send(err));
-                        res.send({ message: "Usuário atualizado com sucesso!" });
-                    });
-                });
-            });
-        });
-    } catch (e) { res.status(500).send(e); }
-});
-
-// 3. Exclusão Lógica de Usuário (Soft Delete)
-app.delete('/usuarios/:id', (req, res) => {
-    const { id } = req.params;
-    const query = "UPDATE usuarios SET indicativo_exclusao = TRUE WHERE id = ?";
-
-    db.query(query, [id], (err, result) => {
-        if (err) return res.status(500).send(err);
-        res.send({ message: "Usuário removido da equipe!" });
-    });
-});
-
-
 
 // --- FINANCEIRO: TIPOS DE LANÇAMENTO ---
 app.get('/fin-tipos', (req, res) => {
@@ -591,20 +569,6 @@ app.post('/fin-tipos', (req, res) => {
     });
 });
 
-// --- FINANCEIRO: LIVRO CAIXA ---
-/*app.get('/fin-caixa', (req, res) => {
-    const sql = `
-        SELECT lc.*, tl.descricao as tipo_nome, tl.tipo 
-        FROM fin_livro_caixa lc
-        JOIN fin_tipos_lancamento tl ON lc.id_tipo_lancamento = tl.id
-        WHERE lc.indicativo_exclusao = FALSE
-        ORDER BY lc.data_lancamento DESC`;
-    db.query(sql, (err, results) => {
-        if (err) return res.status(500).send(err);
-        res.send(results);
-    });
-});
-*/
 
 app.get('/fin-caixa', (req, res) => {
     // Pegamos as datas da URL. Se não vierem, pegamos o mês atual por padrão.
