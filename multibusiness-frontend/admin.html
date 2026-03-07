@@ -66,6 +66,16 @@
                         <input type="text" id="regCPF" oninput="mascaraCPF(this)" maxlength="14" autocomplete="numero-cpf" required>
                     </div>
 
+                     <div class="form-group">
+                        <label>Perfil de Acesso</label>
+                        <select id="regPerfil">
+                            <option value="2">Vendedor</option>
+                            <option value="1">Administrador</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-grid">
                     <div class="form-group">
                         <label id="labelSenha">Senha</label>
                         <input type="password" id="regSenha" placeholder="******" oninput="verificarForcaSenha(this.value)" autocomplete="new-password">
@@ -74,37 +84,22 @@
                             <div id="strength-bar" style="height: 4px; width: 0%; border-radius: 2px; transition: 0.3s;"></div>
                             <small id="strength-text" style="font-size: 0.7rem; color: #8b949e;"></small>
                         </div>
+
+                        <small id="senhaHelp" style="display:block; margin-bottom: 15px; color: #8b949e;">
+                        Mínimo 8 caracteres (A-z, 0-9 e símbolos).
+                        </small>
                     </div>
 
                     <div class="form-group">
                         <label>Confirmar Senha</label>
                         <input type="password" id="regSenhaConfirma" placeholder="******" autocomplete="new-password">
                     </div>
-
-                    <small id="senhaHelp" style="display:block; margin-bottom: 15px; color: #8b949e;">
-                        Mínimo 8 caracteres (A-z, 0-9 e símbolos).
-                    </small>
-                    <!--
-                    <div class="form-group">
-                        <label id="labelSenha">Senha Provisória</label>
-                        <input type="password" id="regSenha" placeholder="******">
-                        <small id="senhaHelp">Deixe em branco para manter a atual.</small>
-                    </div>
-                    -->
                 </div>
 
                 <div class="form-group">
                     <label>Foto de Perfil</label>
                     <input type="file" id="regFoto" accept=".jpg, .jpeg" onchange="validarImagem(this)">
                     <img id="preview" class="photo-preview">
-                </div>
-
-                <div class="form-group">
-                    <label>Perfil de Acesso</label>
-                    <select id="regPerfil">
-                        <option value="2">Vendedor</option>
-                        <option value="1">Administrador</option>
-                    </select>
                 </div>
 
                 <div class="modal-actions">

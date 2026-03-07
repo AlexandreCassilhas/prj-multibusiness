@@ -8,19 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadUsers();
 } );
 
-// Formata 11 dígitos para 000.000.000-00
-function formatarCPF(cpf) {
-    const limpo = cpf.replace(/[^\d]+/g, '');
-    return limpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-}
-
-// Formata 11 dígitos para (00) 00000-0000
-function formatarCelular(celular) {
-    const limpo = celular.replace(/[^\d]+/g, '');
-    return limpo.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
-}
-
-
 // 1. Carregar Usuários do Banco (Apenas indicativo_exclusao = FALSE)
 async function loadUsers() {
     try {
@@ -116,7 +103,6 @@ document.getElementById('formCadastro').onsubmit = async (e) => {
         solicitantePerfis: adminData.perfis
     };
 
-    
         // 1. Validação de igualdade
         if (vSenha !== confirma) {
             alert("As senhas não coincidem!");
@@ -128,7 +114,6 @@ document.getElementById('formCadastro').onsubmit = async (e) => {
             alert("A senha deve ter no mínimo 8 caracteres, incluindo maiúsculas, números e símbolos.");
             return;
         }
-
 
     const method = id ? 'PUT' : 'POST';
     const url = id ? `http://localhost:3000/usuarios/${id}` : 'http://localhost:3000/usuarios';
@@ -190,6 +175,19 @@ function validarImagem(input) {
         };
         reader.readAsDataURL(file);
     }
+}
+
+
+// Formata 11 dígitos para 000.000.000-00
+function formatarCPF(cpf) {
+    const limpo = cpf.replace(/[^\d]+/g, '');
+    return limpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+}
+
+// Formata 11 dígitos para (00) 00000-0000
+function formatarCelular(celular) {
+    const limpo = celular.replace(/[^\d]+/g, '');
+    return limpo.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
 }
 
 // Função para Máscara de CPF
