@@ -231,6 +231,7 @@ async function saveStockEntry() {
     if(res.ok) {
         alert("Estoque Atualizado!");
         document.getElementById('entryQty').value = "";
+        document.getElementById('entryCost').value="";
         loadProducts(); // Atualiza a tabela
     } else {
         alert("Erro ao atualizar estoque.");
