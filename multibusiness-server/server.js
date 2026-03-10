@@ -11,6 +11,15 @@ let sessionCaptcha = ""; // Variável global para validar o captcha
 app.use(express.json({ limit: '10mb' }));
 app.use(cors());
 
+/* BLOCO TEMPORÁRIO PARA GERAR O HASH CORRETO
+bcrypt.hash("Polifonia@2026", 10).then(hash => {
+    console.log("-----------------------------------------");
+    console.log("HASH OFICIAL PARA 'Polifonia@2026':");
+    console.log(hash);
+    console.log("-----------------------------------------");
+});
+*/
+
 // 1. Conexão com o Banco de Dados
 const db = mysql.createConnection({
     host: 'localhost',
@@ -80,6 +89,9 @@ app.post('/login', (req, res) => {
 
     db.query(sql, [login], async (err, results) => {
         if (err) return res.status(500).send({ message: "Erro no banco de dados." });
+
+        //console.log("Tentativa de Login CPF:", login); // LOG 1
+        //console.log("Utilizadores encontrados:", results.length); // LOG 2
 
         // 3. SE NÃO ENCONTRAR O USUÁRIO (Blindagem contra o 500)
         if (results.length === 0) {
