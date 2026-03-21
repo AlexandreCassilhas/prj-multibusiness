@@ -11,15 +11,19 @@ function carregarSessaoUsuario() {
     const userData = JSON.parse(rawData);
 
     // 1. Atualiza Nome e Perfil (pega o primeiro perfil se houver vários)
+    document.getElementById('title').innerText = userData.nome_fantasia;
     document.getElementById('userNameDisplay').innerText = userData.user;
     document.getElementById('userRoleDisplay').innerText = userData.perfis[0];
+    document.getElementById('nome-empresa').innerText = userData.nome_fantasia;
+    document.getElementById('cnpj').innerText = userData.cnpj;
+    document.getElementById('logo-display').src = userData.foto_logo;
 
     // 2. Atualiza a Foto (se existir no banco)
     if (userData.foto) {
         document.getElementById('userPhotoDisplay').src = userData.foto;
     } else {
         // Foto padrão caso o usuário não tenha cadastrado uma
-        document.getElementById('userPhotoDisplay').src = 'https://via.placeholder.com/40';
+        document.getElementById('userPhotoDisplay').src = '/img/foto2x2.jpg';
     }
 }
 
@@ -31,8 +35,10 @@ function logout() {
 }
 
 async function carregarProdutosDoBanco() {
+    const userData = JSON.parse(localStorage.getItem('polifonia_user'));
+
     try {
-        const res = await fetch('http://localhost:3000/produtos');
+        const res = await fetch(`http://localhost:3000/produtos?empresa_id=${userData.empresa_id}`);
         const produtos = await res.json();
         const select = document.getElementById('product');
 
@@ -59,7 +65,6 @@ async function carregarProdutosDoBanco() {
 }
 
 
-
 // Rotina de Segurança - Controle de Acesso ***
 document.addEventListener('DOMContentLoaded', () => {
     carregarSessaoUsuario();
@@ -70,22 +75,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    if (!userData.perfis.includes('Administrador')) {
+    if (!userData.perfis.includes('Administrador') && !userData.perfis.includes('Administrador Empresas')) {
         document.getElementById('btn-dash').style.display = 'none'; // esconde o botão de "Voltar ao DashBoard"
     }
 
-    // Exemplo de Restrição: Só administradores vêm o botão de Limpar Histórico
-    const isAdmin = userData.perfis.includes('Administrador');
-    const clearBtn = document.querySelector('.btn-clear');
-    
-    if (clearBtn && !isAdmin) {
-        clearBtn.style.display = 'none'; // Esconde para vendedores
-    }
 });
 
 let cartItems = [];
-//let salesHistory = JSON.parse(localStorage.getItem('polifonia_sales')) || [];
-
 
 function updatePrice() {
     const productSelect = document.getElementById('product');
@@ -148,6 +144,9 @@ function renderCart() {
 
 // AGORA: Enviar a venda para o Servidor
 async function finishSale() {
+    // Carrega os dados do usuário no localStorage
+    const userData = JSON.parse(localStorage.getItem('polifonia_user'));
+
     const buyer = document.getElementById('buyerName').value;
     const payment = document.querySelector('input[name="payment"]:checked');
     const totalDiscountRaw = document.getElementById('globalDiscount').value;
@@ -155,15 +154,15 @@ async function finishSale() {
     const totalRaw = document.getElementById('grand-total').innerText;
     const total = parseFloat(totalRaw.replace(',', '.'));
 
-    const userData = JSON.parse(localStorage.getItem('polifonia_user'));
-
     if (cartItems.length === 0) return alert("Carrinho vazio!");
     if (!payment) return alert("Selecione o pagamento!");
 
     const novaVenda = {
+        empresa_id: userData.empresa_id,
         comprador: buyer,
         vendedor: userData ? userData.user : 'Desconhecido',
         itens: cartItems,
+        desconto_global: totalDiscount,
         pagamento: payment.value,
         total: total
     };
@@ -279,6 +278,12 @@ function closeModal() {
 let currentSalesFromDB = [];
 
 async function renderHistory() {
+
+     // Carrega os dados do usuário no localStorage
+    const userData = JSON.parse(localStorage.getItem('polifonia_user'));
+    if (!userData || !userData.empresa_id) return;
+    const empId = userData.empresa_id;
+
     const historyList = document.getElementById('sales-history-list');
     const filterName = document.getElementById('filterName').value.toLowerCase();
     const filterDate = document.getElementById('filterDate').value;
@@ -289,7 +294,7 @@ async function renderHistory() {
 
     try {
         // 1. Busca os dados do seu servidor Node.js
-        const response = await fetch('http://localhost:3000/vendas');
+        const response = await fetch(`http://localhost:3000/vendas?empresa_id=${empId}`);
         if (!response.ok) throw new Error('Falha ao buscar dados do servidor');
         
         // 2. Transforma a resposta em JSON e guarda na nossa "memória global"
@@ -421,6 +426,10 @@ async function removeSale(id) {
 
 
 async function exportToCSV() {
+     // Carrega os dados do usuário no localStorage
+     const userData = JSON.parse(localStorage.getItem('polifonia_user'));
+     if (!userData || !userData.empresa_id) return;
+     const empId = userData.empresa_id;
      try {
         // Capturando o conteúdo dos campos filtros
         const filterName = document.getElementById('filterName').value.toLowerCase();
@@ -431,7 +440,7 @@ async function exportToCSV() {
         dataFilter.setDate(dataFilter.getDate() + 1);
 
         // 1. Busca os dados do seu servidor Node.js
-        const response = await fetch('http://localhost:3000/vendas');
+        const response = await fetch(`http://localhost:3000/vendas?empresa_id=${empId}`);
         if (!response.ok) throw new Error('Falha ao buscar dados do servidor');
         
         // 2. Transforma a resposta em JSON e guarda na nossa "memória global"

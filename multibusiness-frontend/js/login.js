@@ -57,10 +57,24 @@
 
           const data = await response.json();
 
-          // Se Perfil "Administrador" -> Dashboard, senão -> "Venda"
+          // Se Perfil "Administrador" || "Administrador Empresas" -> Dashboard, senão -> "Venda"
           if (response.ok) {
-              localStorage.setItem('polifonia_user', JSON.stringify(data));
-              if(!data.perfis.includes('Administrador')) {
+
+            const userToStore = {
+                id: data.id,
+                user: data.user,
+                perfis: data.perfis, // Array de perfis que já implementou
+                foto: data.foto,
+                empresa_id: data.empresa_id, // Informação da Empresa
+                foto_logo: data.foto_logo,
+                nome_fantasia: data.nome_fantasia,
+                cnpj: data.cnpj
+            };
+            
+            localStorage.setItem('polifonia_user', JSON.stringify(userToStore));
+            // localStorage.setItem('polifonia_user', JSON.stringify(data));
+
+              if(!data.perfis.includes('Administrador') && !data.perfis.includes('Administrador Empresas')) {
                 window.location.href = 'venda.html';
               } else {
                 window.location.href = 'dashboard.html';

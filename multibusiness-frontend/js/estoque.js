@@ -5,7 +5,11 @@ let allProducts = [];
 document.addEventListener('DOMContentLoaded', () => {
     // Carregar Perfil
     const userData = JSON.parse(localStorage.getItem('polifonia_user'));
-    if (userData) document.getElementById('userNameDisplay').innerText = userData.user;
+
+    if (!userData) { window.location.href = 'login.html'; return; }
+
+    document.getElementById('logo-display').src = userData.foto_logo;
+    document.getElementById('userNameDisplay').innerText = userData.user;
     
     loadProducts();
 });
@@ -22,8 +26,11 @@ function switchTab(tabName) {
 
 // --- GESTÃO DE PRODUTOS ---
 async function loadProducts() {
+    const userData = JSON.parse(localStorage.getItem('polifonia_user'));
+    const empId = userData.empresa_id;
     try {
-        const res = await fetch('http://localhost:3000/produtos');
+        // Enviado o ID da empresa na query string
+        const res = await fetch(`http://localhost:3000/produtos?empresa_id=${empId}`);
         allProducts = await res.json();
         renderProductsTable();
         populateSelect();
@@ -112,10 +119,14 @@ function openEditProduct(id) {
 
 // 3. Função Unificada: Salvar (Novo ou Edição)
 async function saveProduct() {
+    // Traz o id da empresa da localStorage
+    const userData = JSON.parse(localStorage.getItem('polifonia_user'));
+
     const id = document.getElementById('prodId').value; // Verifica se tem ID
     
 // No estoque.js, dentro de saveProduct()
     const payload = {
+        empresa_id: userData.empresa_id, // Envia o ID para o POST/PUT
         nome: document.getElementById('prodName').value,
         descricao: document.getElementById('prodDesc').value,
         preco: document.getElementById('prodPrice').value,
@@ -210,6 +221,11 @@ function resetImageSlots() {
 
 // --- ENTRADA DE ESTOQUE ---
 async function saveStockEntry() {
+
+     // Traz o id da empresa da localStorage
+    const userData = JSON.parse(localStorage.getItem('polifonia_user'));
+    const empId = userData.empresa_id;
+
     const produtoId = document.getElementById('entryProductSelect').value;
     const qtd = document.getElementById('entryQty').value;
     const custo = document.getElementById('entryCost').value;
@@ -217,6 +233,7 @@ async function saveStockEntry() {
     if(!produtoId || !qtd) return alert("Selecione produto e quantidade.");
 
     const payload = {
+        empresa_id: empId,
         produto_id: produtoId,
         quantidade: parseInt(qtd),
         novo_custo: custo ? parseFloat(custo) : null
@@ -240,6 +257,10 @@ async function saveStockEntry() {
 
 // --- CÁLCULO ABC ---
 async function calculateABC() {
+     // Traz o id da empresa da localStorage
+    const userData = JSON.parse(localStorage.getItem('polifonia_user'));
+    const empId = userData.empresa_id;
+
     const start = document.getElementById('abcStart').value;
     const end = document.getElementById('abcEnd').value;
 
@@ -248,7 +269,7 @@ async function calculateABC() {
     const res = await fetch('http://localhost:3000/estoque/calcular-abc', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ dataInicio: start, dataFim: end })
+        body: JSON.stringify({ dataInicio: start, dataFim: end, empresa_id: empId })
     });
 
     const data = await res.json();

@@ -6,11 +6,23 @@ let produtosCriticos = []; // Variável para guardar a lista
 
 document.addEventListener('DOMContentLoaded', async () => {
     const userData = JSON.parse(localStorage.getItem('polifonia_user'));
-    if (!userData || !userData.perfis.includes('Administrador')) {
+
+    // Validação de Perfil para "Administrador"
+    if (!userData || (!userData.perfis.includes('Administrador') && !userData.perfis.includes('Administrador Empresas'))) {
         alert("Acesso restrito a Administradores.");
         window.location.href = 'venda.html';
         return;
     }
+    // Validação de Perfil para Gestão de Empresas ("Super Admin")
+    if (userData.perfis.includes('Administrador Empresas')) {
+        const menuEmpresas = document.getElementById('menuEmpresas');
+        if (menuEmpresas) menuEmpresas.style.display = 'block';
+        console.log('menu-empresas');
+    }
+
+
+
+    document.getElementById('logo-display').src = userData.foto_logo;
     document.getElementById('welcomeMsg').innerText = `Olá, ${userData.user}`;
 
     // Configurar datas padrão (Início do mês até hoje)
@@ -27,8 +39,12 @@ async function fetchDashboardData() {
     const inicio = document.getElementById('dashInicio').value;
     const fim = document.getElementById('dashFim').value;        
 
+    // Captura o ID da empresa do utilizador logado
+    const userData = JSON.parse(localStorage.getItem('polifonia_user'));
+    const empId = userData.empresa_id;
+
     try {
-        const res = await fetch(`http://localhost:3000/dashboard-data?inicio=${inicio}&fim=${fim}`);
+        const res = await fetch(`http://localhost:3000/dashboard-data?inicio=${inicio}&fim=${fim}&empresa_id=${empId}`);
         
         if (!res.ok) throw new Error("Erro na requisição ao servidor");
         

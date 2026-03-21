@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!userData) {
         window.location.href = 'login.html'
     } else {
+        document.getElementById('title').innerText = userData.nome_fantasia + ' - Financeiro';
+        document.getElementById('title-printable').innerText = userData.cnpj;
+        document.getElementById('logo-display').src = userData.foto_logo;
+        document.getElementById('logo-display-printable').src = userData.foto_logo;
         document.getElementById('userNameDisplay').innerText = userData.user;
         document.getElementById('filtroInicio').value = primeiroDia;
         document.getElementById('filtroFim').value = dataHoje;
@@ -36,8 +40,9 @@ function switchTab(tabName) {
 // ==========================================
 
 async function loadTypes() {
+    const userData = JSON.parse(localStorage.getItem('polifonia_user'));
     try {
-        const res = await fetch('http://localhost:3000/fin-tipos');
+        const res = await fetch(`http://localhost:3000/fin-tipos?empresa_id=${userData.empresa_id}`);
         allTypes = await res.json();
         renderTypesTable();
         filterTypesByFluxo(); // Atualiza o select do outro modal
@@ -82,11 +87,15 @@ function editTipo(id) {
 // Adicionamos o ".onsubmit" antes do sinal de "="
 document.getElementById('formTipo').onsubmit = async (e) => {
     e.preventDefault();
-    
+
+    const userData = JSON.parse(localStorage.getItem('polifonia_user'));
+
     const id = document.getElementById('tipoId').value;
+
     const payload = {
         descricao: document.getElementById('tipoDesc').value,
-        tipo: document.getElementById('tipoFluxo').value
+        tipo: document.getElementById('tipoFluxo').value,
+        empresa_id: userData.empresa_id
     };
 
     const method = id ? 'PUT' : 'POST';
@@ -115,16 +124,18 @@ document.getElementById('formTipo').onsubmit = async (e) => {
 // ==========================================
 
 async function loadCaixa() {
+    const userData = JSON.parse(localStorage.getItem('polifonia_user'));
+
     const inicio = document.getElementById('filtroInicio').value;
     const fim = document.getElementById('filtroFim').value;
 
     try {
-        // 1. Busca Saldo Anterior
-        const resSaldo = await fetch(`http://localhost:3000/fin-saldo-anterior?inicio=${inicio}`);
+        // 1. Busca Saldo Anterior filtrado por empresa
+        const resSaldo = await fetch(`http://localhost:3000/fin-saldo-anterior?inicio=${inicio}&empresa_id=${userData.empresa_id}`);
         const { saldoAnterior } = await resSaldo.json();
 
-        // 2. Busca Lançamentos do Período
-        const resCaixa = await fetch(`http://localhost:3000/fin-caixa?inicio=${inicio}&fim=${fim}`);
+        // 2. Busca Lançamentos do Período filtrados por empresa
+        const resCaixa = await fetch(`http://localhost:3000/fin-caixa?inicio=${inicio}&fim=${fim}&empresa_id=${userData.empresa_id}`);
         allCaixa = await resCaixa.json();
         
         // 3. Renderiza com o novo formato
@@ -173,8 +184,8 @@ function renderCaixaContabil(saldoAnterior) {
                 <td>${index + 1}</td>
                 <td>${dataFormatada}</td>
                 <td><strong>${l.tipo_nome}</strong><br><small>${l.descricao || ''}</small></td>
-                <td style="color: #238636; text-align: right;">${l.tipo === 'Entrada' ? valor.toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '-'}</td>
-                <td style="color: #da3633; text-align: right;">${l.tipo === 'Saída' ? valor.toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '-'}</td>
+                <td style="color: #238636; text-align: right; padding-right: 10px;">${l.tipo === 'Entrada' ? valor.toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '-'}</td>
+                <td style="color: #da3633; text-align: right; padding-right: 10px;">${l.tipo === 'Saída' ? valor.toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '-'}</td>
                 <td class="no-print" style="padding-left: 30px;">
                     <button class="btn-edit" onclick="editCaixa(${l.id})">✎</button>
                     <button class="btn-delete" onclick="softDeleteCaixa(${l.id})">✕</button>
@@ -289,6 +300,8 @@ async function editCaixa(id) {
 document.getElementById('formCaixa').onsubmit = async (e) => {
     e.preventDefault();
 
+    const userData = JSON.parse(localStorage.getItem('polifonia_user'));
+
     // 🛡️ VALIDAÇÃO DE VALOR
     const valorInput = document.getElementById('caixaValor').value;
     const valorNum = parseFloat(valorInput);
@@ -299,9 +312,9 @@ document.getElementById('formCaixa').onsubmit = async (e) => {
     }
 
     const id = document.getElementById('caixaId').value;
-    const userData = JSON.parse(localStorage.getItem('polifonia_user'));
 
     const payload = {
+        empresa_id: userData.empresa_id,
         id_tipo_lancamento: document.getElementById('caixaTipoSelect').value,
         descricao: document.getElementById('caixaDesc').value,
         data_lancamento: document.getElementById('caixaData').value,

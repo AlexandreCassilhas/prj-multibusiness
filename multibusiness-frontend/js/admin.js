@@ -1,17 +1,67 @@
 let allUsers = [];
 let fotoBase64 = null;
 
+// Variável global para empresas
+let listaEmpresas = [];
+
 document.addEventListener('DOMContentLoaded', () => {
     // Carregar Perfil
     const userData = JSON.parse(localStorage.getItem('polifonia_user'));
-    if (userData) document.getElementById('userNameDisplay').innerText = userData.user;
+
+    if (!userData) { window.location.href = 'login.html'; return; }
+
+    document.getElementById('logo-display').src = userData.foto_logo;
+    document.getElementById('title').innerText = userData.nome_fantasia;
+    document.getElementById('userNameDisplay').innerText = userData.user;
+
+    // 1. Carrega Perfis Dinamicamente
+    carregarPerfis(userData.perfis.includes('Administrador Empresas'));
+
+    // Se for Super Admin, carregamos a lista de empresas para o select
+    if (userData.perfis.includes('Administrador Empresas')) {
+        carregarEmpresasParaSelect();
+        document.getElementById('groupEmpresaSelect').style.display = 'block';
+    }
+
     loadUsers();
 } );
 
+// 0. Carregar a lista de empresas para o campo <select>
+async function carregarEmpresasParaSelect() {
+    try {
+        const res = await fetch('http://localhost:3000/empresas');
+        listaEmpresas = await res.json();
+        const select = document.getElementById('regEmpresa');
+        
+        select.innerHTML = listaEmpresas.map(emp => 
+            `<option value="${emp.id}">${emp.nome_fantasia}</option>`
+        ).join('');
+    } catch (e) { console.error("Erro ao carregar empresas para select:", e); }
+}
+
+// Nova função para buscar perfis no banco
+async function carregarPerfis(isSuper) {
+    try {
+        const res = await fetch(`http://localhost:3000/perfis?isSuperAdmin=${isSuper}`);
+        const perfis = await res.json();
+        const select = document.getElementById('regPerfil');
+        
+        select.innerHTML = perfis.map(p => 
+            `<option value="${p.id}">${p.nome_perfil}</option>`
+        ).join('');
+    } catch (e) { console.error("Erro ao carregar perfis:", e); }
+}
+
 // 1. Carregar Usuários do Banco (Apenas indicativo_exclusao = FALSE)
 async function loadUsers() {
+
+    const userData = JSON.parse(localStorage.getItem('polifonia_user'));
+
+    const isSuper = userData.perfis.includes('Administrador Empresas');
+
     try {
-        const res = await fetch('http://localhost:3000/usuarios');
+        // Passamos o contexto para o backend decidir o que mostrar
+        const res = await fetch(`http://localhost:3000/usuarios?empresa_id=${userData.empresa_id}&isSuperAdmin=${isSuper}`);
         allUsers = await res.json();
         renderUsersTable();
     } catch (e) { console.error("Erro ao carregar equipe:", e); }
@@ -44,30 +94,39 @@ function renderUsersTable() {
 function openEditUser(id) {
     const user = allUsers.find(u => u.id === id);
     if (!user) return;
+    // const userData = JSON.parse(localStorage.getItem('polifonia_user'));
 
-    document.getElementById('modalTitle').innerText = "Editar Membro da Equipe";
-    document.getElementById('userId').value = user.id;
-    document.getElementById('regNome').value = user.nome;
-    document.getElementById('regEmail').value = user.email;
-    
-    // --- APLICAÇÃO DAS MÁSCARAS NO PREENCHIMENTO ---
-    document.getElementById('regCPF').value = formatarCPF(user.cpf);
-    document.getElementById('regCelular').value = formatarCelular(user.celular);
-    
-    document.getElementById('regPerfil').value = user.perfil_id;
-    
-    // Configurações de senha para edição
-    document.getElementById('senhaHelp').style.display = 'block';
-    document.getElementById('regSenha').required = false;
+    if (user) {
+        document.getElementById('modalTitle').innerText = "Editar Membro da Equipe";
+        document.getElementById('userId').value = user.id;
+        document.getElementById('regNome').value = user.nome;
+        document.getElementById('regEmail').value = user.email || "";
 
-    // Foto e Modal
-    if (user.foto_perfil) {
-        fotoBase64 = user.foto_perfil;
-        const preview = document.getElementById('preview');
-        preview.src = fotoBase64;
-        preview.style.display = 'block';
+        // Se houver empresa_id e o select estiver visível, seleciona
+        const selectEmpresa = document.getElementById('regEmpresa');
+        if (selectEmpresa) {
+            selectEmpresa.value = user.empresa_id;
+        }
+        
+        // --- APLICAÇÃO DAS MÁSCARAS NO PREENCHIMENTO ---
+        document.getElementById('regCPF').value = formatarCPF(user.cpf);
+
+        document.getElementById('regCelular').value = formatarCelular(user.celular) || "";
+        
+        document.getElementById('regPerfil').value = user.perfil_id;
+        
+        // Configurações de senha para edição
+        document.getElementById('senhaHelp').style.display = 'block';
+        document.getElementById('regSenha').required = false;
+
+        // Foto e Modal
+        if (user.foto_perfil) {
+            fotoBase64 = user.foto_perfil;
+            const preview = document.getElementById('preview');
+            preview.src = fotoBase64;
+            preview.style.display = 'block';
+        }
     }
-
     document.getElementById('user-modal').style.display = 'flex';
 }
 
@@ -75,8 +134,22 @@ function openEditUser(id) {
 document.getElementById('formCadastro').onsubmit = async (e) => {
     e.preventDefault();
     
+    // Pega dados do administrador logado para auditoria
+    const userData = JSON.parse(localStorage.getItem('polifonia_user'));
+    const isSuperAdmin = userData.perfis.includes('Administrador Empresas');
+
     const cpfOriginal = document.getElementById('regCPF').value;
     const cpfLimpo = cpfOriginal.replace(/[^\d]+/g, '');
+
+    // Se logado = SuperAdmin -> pega do campo <select> do Form, senão pega do user logado
+    const empresaId = isSuperAdmin 
+        ? document.getElementById('regEmpresa').value 
+        : userData.empresa_id;
+    
+    if (!empresaId) {
+        alert("Erro Crítico: Não foi possível identificar a sua empresa. Por favor, faça login novamente.");
+        return;
+    }
 
     // 🛡️ VALIDAÇÃO DE SEGURANÇA
     if (!validarCPF(cpfLimpo)) {
@@ -89,10 +162,8 @@ document.getElementById('formCadastro').onsubmit = async (e) => {
     const vSenha = document.getElementById('regSenha').value;
     const confirma = document.getElementById('regSenhaConfirma').value;
 
-    // Pega dados do administrador logado para auditoria
-    const adminData = JSON.parse(localStorage.getItem('polifonia_user'));
-
     const payload = {
+        empresa_id: empresaId,
         nome: document.getElementById('regNome').value,
         email: document.getElementById('regEmail').value,
         celular: document.getElementById('regCelular').value,
@@ -100,7 +171,7 @@ document.getElementById('formCadastro').onsubmit = async (e) => {
         senha: vSenha,
         foto: fotoBase64,
         perfil_id: document.getElementById('regPerfil').value,
-        solicitantePerfis: adminData.perfis
+        solicitantePerfis: userData.perfis
     };
 
         // 1. Validação de igualdade
@@ -180,9 +251,15 @@ function validarImagem(input) {
 
 // Formata 11 dígitos para 000.000.000-00
 function formatarCPF(cpf) {
+    if (!cpf) return ""; // Retorna vazio se não houver CPF, evitando o erro de 'replace'
+    cpf = cpf.replace(/\D/g, "");
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+}
+/*
     const limpo = cpf.replace(/[^\d]+/g, '');
     return limpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-}
+*/
+
 
 // Formata 11 dígitos para (00) 00000-0000
 function formatarCelular(celular) {
