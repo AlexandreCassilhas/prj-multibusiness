@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polifonia - Gestão de Equipe</title>
+    <link rel="shortcut icon" href="img/stilbensTech-icon.ico" type="image/x-icon">
+    <title id="title">Empresa - Gestão de Equipe</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/admin.css">
 </head>
@@ -11,7 +12,10 @@
     <div class="container">
         <header class="main-header">
             <div class="header-brand">
-                <div class="logo-circle"><span class="dot"></span><span class="brand-name">polifonia</span></div>
+                <img   id="logo-display" 
+                        src="" alt="Logo-Empresa" 
+                        style="width:120px; height:120px; border-radius:50%; object-fit:cover;"
+                    >
             </div>
             <div class="user-profile">
                 <span id="userNameDisplay">Carregando...</span>
@@ -43,7 +47,15 @@
         <div class="modal-content">
             <h3 id="modalTitle">Cadastrar Novo Usuário</h3>
             <form id="formCadastro">
-                <input type="hidden" id="userId"> <div class="form-group">
+                <div class="form-group" id="groupEmpresaSelect" style="display: none;">
+                    <label>Empresa Vinculada</label>
+                    <select id="regEmpresa" class="input-dark">
+                        </select>
+                </div>
+
+                <input type="hidden" id="userId"> 
+
+                <div class="form-group">
                     <label>Nome Completo</label>
                     <input type="text" id="regNome" required>
                 </div>
@@ -69,8 +81,7 @@
                      <div class="form-group">
                         <label>Perfil de Acesso</label>
                         <select id="regPerfil">
-                            <option value="2">Vendedor</option>
-                            <option value="1">Administrador</option>
+                            <option value="">Carregando perfis...</option>
                         </select>
                     </div>
                 </div>

@@ -2,15 +2,21 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <title>Polifonia - Dashboard</title>
+    <title id="title">Empresa - Dashboard</title>
+    <link rel="shortcut icon" href="img/stilbensTech-icon.ico" type="image/x-icon">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="container" style="max-width: 1200px;"> <header class="main-header">
+    <div class="container" style="max-width: 1200px;"> 
+        <header class="main-header">
             <div class="header-brand">
-                <div class="logo-circle"><span class="dot"></span><span class="brand-name">polifonia</span></div>
+                <img   id="logo-display" 
+                        src="" alt="Logo-Empresa" 
+                        style="width:120px; height:120px; border-radius:50%; object-fit:cover;"
+                    >
+                <!-- <div class="logo-circle"><span class="dot"></span><span class="brand-name">polifonia</span></div> -->
             </div>
             <div class="user-profile">
                 <span id="welcomeMsg">Olá, Admin</span>
@@ -23,6 +29,10 @@
             <a href="venda.html" class="menu-card">
                 <h3>🛒 PDV</h3>
                 <p>Frente de Caixa</p>
+            </a>
+            <a href="empresa.html" class="menu-card" id="menuEmpresas" style="display: none;">
+                <h3>🏢 Empresas</h3>
+                <p>Gestão Multi-Empresa</p>
             </a>
             <a href="admin.html" class="menu-card">
                 <h3>👥 Usuários</h3>
@@ -38,9 +48,15 @@
             </a>
         </nav>
 
-        <h3 id="title-1">
-    ⚡ Performance Hoje
-        </h3>
+
+        <h3 style="
+                margin: 25px 0 15px 0; 
+                color: #8b949e; 
+                font-size: 0.9rem; 
+                text-transform: uppercase; 
+                letter-spacing: 1px;
+        ">⚡ Performance Hoje</h3>
+        
         <div class="kpi-grid">
             <div class="kpi-card highlight">
                 <span class="kpi-label">Faturamento Hoje</span>
@@ -60,10 +76,15 @@
             </div>
         </div>
 
-        <h3 id="title-2">
-            📊 Gestão Interna (Período Selecionado)
-        </h3>
-        <div class="kpi-grid">
+        <h3 style="
+                margin: 35px 0 15px 0; 
+                color: #8b949e; 
+                font-size: 0.9rem; 
+                text-transform: uppercase; 
+                letter-spacing: 1px;
+        ">📊 Gestão Interna (Período Selecionado)</h3>
+
+        <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
             <div class="kpi-card" style="border-left-color: #d29922; cursor: pointer;" onclick="mostrarDetalhesEstoque()">
                 <span class="kpi-label">Itens Abaixo do Mínimo</span>
                 <span class="kpi-value" id="kpiEstoque">0</span>
@@ -90,7 +111,7 @@
                 <canvas id="sellerChart"></canvas>
             </div>
             <div class="chart-box">
-                <h4>📦 Top 5 Produtos (Qtd)</h4> <canvas id="productsChart"></canvas>
+                <h4>📦 Top 7 Produtos (Qtd)</h4> <canvas id="productsChart"></canvas>
             </div>
             <div class="chart-box">
                 <h4>📈 Evolução (7 Dias)</h4>
