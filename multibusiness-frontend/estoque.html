@@ -2,7 +2,8 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <title>Polifonia - Estoque</title>
+    <title id="title">Empresa - Estoque</title>
+    <link rel="shortcut icon" href="img/stilbensTech-icon.ico" type="image/x-icon">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/estoque.css">
 </head>
@@ -10,7 +11,10 @@
     <div class="container">
         <header class="main-header">
             <div class="header-brand">
-                <div class="logo-circle"><span class="dot"></span><span class="brand-name">polifonia</span></div>
+                <img   id="logo-display" 
+                        src="" alt="Logo-Empresa" 
+                        style="width:120px; height:120px; border-radius:50%; object-fit:cover;"
+                >
             </div>
             <div class="user-profile">
                 <span id="userNameDisplay">Carregando...</span>
@@ -94,7 +98,7 @@
 
     <div id="product-modal" class="modal">
         <div class="modal-content">
-            <h3 style="color: aliceblue;">Cadastrar / Editar Produto</h3>
+            <h3 id="modalTitle">Cadastrar / Editar Produto</h3>
 
             <input type="hidden" id="prodId">
             

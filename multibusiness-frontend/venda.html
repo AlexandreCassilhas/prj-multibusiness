@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polifonia - PDV</title>
+    <title id="title">Empresa</title>
+    <link rel="shortcut icon" href="img/stilbensTech-icon.ico" type="image/x-icon">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/venda.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,10 +14,10 @@
     <div class="container">
         <header class="main-header">
             <div class="header-brand">
-                <div class="logo-circle">
-                    <span class="dot"></span>
-                    <span class="brand-name">polifonia</span>
-                </div>
+                <img id="logo-display" 
+                     src="" alt="Logo-Empresa" 
+                     style="width:120px; height:120px; border-radius:50%; object-fit:cover;"
+                >
             </div>
 
             <div class="user-profile" id="userProfileArea">
@@ -25,7 +26,7 @@
                     <span id="userRoleDisplay" class="user-role">Perfil</span>
                 </div>
                 <div class="profile-img-container">
-                    <img id="userPhotoDisplay" src="https://via.placeholder.com/40" alt="Foto">
+                    <img id="userPhotoDisplay" src="img/foto2x2.jpg" alt="Foto">
                 </div>
                 <button class="btn-logout" onclick="logout()" title="Sair do Sistema">✕</button>
             </div>
@@ -107,7 +108,6 @@
             <section class="history-section">
               <div class="history-header">
                   <h3>Histórico de Vendas</h3>
-                  <button class="btn-clear" onclick="clearHistory()">Limpar Tudo</button>
               </div>
 
               <div class="filter-controls">
@@ -163,7 +163,8 @@
         <div class="modal-content">
             <div class="receipt-header">
                 <span class="dot"></span>
-                <strong id="polifonia">POLIFONIA</strong>
+                <strong id="nome-empresa">Empresa</strong>
+                <span id="cnpj" class="user-role">00.000.000/0000-00</span>
             </div>
             <div id="receipt-details">
             </div>
