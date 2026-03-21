@@ -25,7 +25,7 @@ const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: '',
-    database: 'polifonia_db'
+    database: 'multibusiness_db'
 });
 
 // Conectar ao MySQL
@@ -34,7 +34,7 @@ db.connect(err => {
         console.error('Erro ao conectar ao MySQL:', err);
         return;
     }
-    console.log('Conectado ao banco de dados MySQL da Polifonia!');
+    console.log('Conectado ao banco de dados MySQL da Multibusiness!');
 });
 
 // --- ROTAS DE SEGURANÇA ---
@@ -81,17 +81,15 @@ app.post('/login', (req, res) => {
 
     // 2. Buscar usuário considerando a exclusão lógica
     const sql = `
-        SELECT u.*, p.nome_perfil 
+        SELECT u.*, p.nome_perfil, e.foto_logo, e.nome_fantasia, e.cnpj 
         FROM usuarios u
         JOIN usuario_perfis up ON u.id = up.usuario_id
         JOIN perfis p ON p.id = up.perfil_id
+        LEFT JOIN empresas e ON e.id = u.empresa_id
         WHERE u.cpf = ? AND u.indicativo_exclusao = FALSE`;
 
     db.query(sql, [login], async (err, results) => {
         if (err) return res.status(500).send({ message: "Erro no banco de dados." });
-
-        //console.log("Tentativa de Login CPF:", login); // LOG 1
-        //console.log("Utilizadores encontrados:", results.length); // LOG 2
 
         // 3. SE NÃO ENCONTRAR O USUÁRIO (Blindagem contra o 500)
         if (results.length === 0) {
@@ -107,7 +105,12 @@ app.post('/login', (req, res) => {
             res.send({
                 user: usuario.nome,
                 foto: usuario.foto_perfil,
+                empresa_id: usuario.empresa_id,
+                foto_logo: usuario.foto_logo,
+                nome_fantasia: usuario.nome_fantasia,
+                cnpj: usuario.cnpj,
                 perfis: results.map(r => r.nome_perfil) // Pega todos os perfis se houver mais de um
+                
             });
         } else {
             res.status(401).send({ message: "Utilizador ou senha incorretos." });
@@ -124,13 +127,33 @@ function eSenhaForte(senha) {
     return regex.test(senha);
 }
 
+// --- 1. LISTAR PERFIS (Dinâmico e Hierárquico) ---
+app.get('/perfis', (req, res) => {
+    const { isSuperAdmin } = req.query;
+    // Se NÃO for Super Admin, filtramos para não exibir o perfil de "Administrador Empresas"
+    let sql = "SELECT * FROM perfis";
+    if (isSuperAdmin !== 'true') {
+        sql += " WHERE nome_perfil != 'Administrador Empresas'";
+    }
+    
+    db.query(sql, (err, results) => {
+        if (err) return res.status(500).send(err);
+        res.send(results);
+    });
+});
+
 // 1. Rota de CADASTRO DE USUÁRIOS (COM AUDITORIA) ---
 app.post('/usuarios', async (req, res) => {
-    const { nome, email, celular, cpf, senha, foto, perfil_id, solicitantePerfis } = req.body;
+    const { nome, email, celular, cpf, senha, foto, perfil_id, solicitantePerfis, empresa_id } = req.body;
 
     // Verificação de segurança: apenas Admins cadastram
-    if (!solicitantePerfis || !solicitantePerfis.includes('Administrador')) {
+    if (!solicitantePerfis || (!solicitantePerfis.includes('Administrador') && !solicitantePerfis.includes('Administrador Empresas'))) {
         return res.status(403).send({ message: "Acesso negado. Apenas administradores podem criar utilizadores." });
+    }
+
+    // Se o empresa_id não vier (por erro no front), não podemos deixar salvar
+    if (!empresa_id) {
+        return res.status(400).send({ message: "A empresa deve ser informada." });
     }
 
     // Chama o validador de senha
@@ -142,9 +165,9 @@ app.post('/usuarios', async (req, res) => {
         const hash = await bcrypt.hash(senha, saltRounds);
         
         // Inserção do Utilizador (created_at e updated_at são automáticos no MySQL)
-        const sqlUser = "INSERT INTO usuarios (nome, email, celular, cpf, senha, foto_perfil) VALUES (?, ?, ?, ?, ?, ?)";
+        const sqlUser = "INSERT INTO usuarios (nome, email, celular, cpf, senha, foto_perfil, empresa_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
         
-        db.query(sqlUser, [nome, email, celular, cpf, hash, foto], (err, result) => {
+        db.query(sqlUser, [nome, email, celular, cpf, hash, foto, empresa_id], (err, result) => {
             if (err) {
                 if (err.code === 'ER_DUP_ENTRY') return res.status(400).send({ message: "Este CPF já está cadastrado!" });
                 return res.status(500).send(err);
@@ -163,15 +186,32 @@ app.post('/usuarios', async (req, res) => {
 
 // 2. Listar Usuários Ativos
 app.get('/usuarios', (req, res) => {
-    const query = `
-        SELECT u.id, u.nome, u.email, u.celular, u.cpf, u.foto_perfil, p.nome_perfil, p.id as perfil_id
+
+    const { empresa_id, isSuperAdmin } = req.query; // Recebe o ID via URL: ?empresa_id=1
+
+    // Se for Super Admin, não filtramos por empresa_id (vê tudo)
+    // Se for Admin comum, filtramos apenas pela empresa dele
+    let query = `
+        SELECT  u.*, 
+                p.nome_perfil, p.id as perfil_id, 
+                e.nome_fantasia as empresa_nome
         FROM usuarios u
         JOIN usuario_perfis up ON u.id = up.usuario_id
         JOIN perfis p ON p.id = up.perfil_id
-        WHERE u.indicativo_exclusao = FALSE
-        ORDER BY u.nome ASC`;
+        LEFT JOIN empresas e ON e.id = u.empresa_id
+        WHERE u.indicativo_exclusao = FALSE`;
+    
+    const params = [];
 
-    db.query(query, (err, results) => {
+     if (isSuperAdmin !== 'true') {
+        query += " AND u.empresa_id = ?";
+        params.push(empresa_id);
+    }
+
+    query += " ORDER BY u.nome ASC"
+
+
+    db.query(query, params, (err, results) => {
         if (err) return res.status(500).send(err);
         res.send(results);
     });
@@ -180,7 +220,7 @@ app.get('/usuarios', (req, res) => {
 // 3. Atualizar Usuário (PUT)
 app.put('/usuarios/:id', async (req, res) => {
     const { id } = req.params;
-    const { nome, email, celular, cpf, senha, foto, perfil_id } = req.body;
+    const { nome, email, celular, cpf, senha, foto, perfil_id, empresa_id } = req.body;
 
     // Se a senha foi enviada para alteração, validamos
     if (senha && !eSenhaForte(senha)) {
@@ -194,11 +234,11 @@ app.put('/usuarios/:id', async (req, res) => {
 
         if (senha && senha.trim() !== "") {
             const hash = await bcrypt.hash(senha, saltRounds);
-            sqlUser = "UPDATE usuarios SET nome=?, email=?, celular=?, cpf=?, senha=?, foto_perfil=? WHERE id=?";
-            paramsUser = [nome, email, celular, cpf, hash, foto, id];
+            sqlUser = "UPDATE usuarios SET nome=?, email=?, celular=?, cpf=?, senha=?, foto_perfil=?, empresa_id=? WHERE id=?";
+            paramsUser = [nome, email, celular, cpf, hash, foto, empresa_id, id];
         } else {
-            sqlUser = "UPDATE usuarios SET nome=?, email=?, celular=?, cpf=?, foto_perfil=? WHERE id=?";
-            paramsUser = [nome, email, celular, cpf, foto, id];
+            sqlUser = "UPDATE usuarios SET nome=?, email=?, celular=?, cpf=?, foto_perfil=?, empresa_id=? WHERE id=?";
+            paramsUser = [nome, email, celular, cpf, foto, empresa_id, id];
         }
 
         db.beginTransaction(err => {
@@ -233,20 +273,66 @@ app.delete('/usuarios/:id', (req, res) => {
     });
 });
 
+// --- GESTÃO DE EMPRESAS (TENANTS) ---
+
+app.get('/empresas', (req, res) => {
+    db.query("SELECT * FROM empresas WHERE indicativo_exclusao = 0", (err, results) => {
+        if (err) return res.status(500).send(err);
+        res.send(results);
+    });
+});
+
+app.post('/empresas', (req, res) => {
+    const { cnpj, razao_social, nome_fantasia, foto_logo } = req.body;
+    const sql = "INSERT INTO empresas (cnpj, razao_social, nome_fantasia, foto_logo) VALUES (?, ?, ?, ?)";
+    db.query(sql, [cnpj, razao_social, nome_fantasia, foto_logo], (err) => {
+        if (err) return res.status(500).send(err);
+        res.send({ message: "Empresa cadastrada com sucesso!" });
+    });
+});
+
+app.put('/empresas/:id', (req, res) => {
+    const { id } = req.params;
+    const { cnpj, razao_social, nome_fantasia, foto_logo } = req.body;
+    const sql = "UPDATE empresas SET cnpj = ?, razao_social = ?, nome_fantasia = ?, foto_logo = ? WHERE id = ?";
+    db.query(sql, [cnpj, razao_social, nome_fantasia, foto_logo, id], (err) => {
+        if (err) return res.status(500).send(err);
+        res.send({ message: "Dados da empresa atualizados!" });
+    });
+});
+
+app.delete('/empresas/:id', (req, res) => {
+    const { id } = req.params;
+    // Soft Delete: Apenas marca como excluído
+    db.query("UPDATE empresas SET indicativo_exclusao = 1 WHERE id = ?", [id], (err) => {
+        if (err) return res.status(500).send(err);
+        res.send({ message: "Empresa removida logicamente." });
+    });
+});
+
+
 // ROTAS DE VENDAS
 
 // 1. Rota para BUSCAR todas as vendas (GET)
 app.get('/vendas', (req, res) => {
-    const query = "SELECT * FROM vendas ORDER BY created_at DESC";
-    
-    db.query(query, (err, results) => {
+
+    const { empresa_id } = req.query; // Captura o ID da URL
+
+     if (!empresa_id) {
+        return res.status(400).send({ message: "O ID da empresa é obrigatório para listar o histórico." });
+    }
+
+     // Adicionado o filtro WHERE empresa_id = ?
+    const query = "SELECT * FROM vendas WHERE empresa_id = ? ORDER BY created_at DESC";
+
+    db.query(query, [empresa_id], (err, results) => {
         if (err) {
             return res.status(500).send(err);
         }
         // Transformamos o texto dos itens de volta para Objeto para o Frontend entender
         const vendasFormatadas = results.map(venda => ({
             ...venda,
-            itens: JSON.parse(venda.itens)
+            itens: typeof venda.itens === 'string' ? JSON.parse(venda.itens) : venda.itens
         }));
         res.send(vendasFormatadas);
     });
@@ -285,74 +371,81 @@ app.put('/vendas/:id', (req, res) => {
 app.get('/dashboard-data', async (req, res) => {
     const inicio = req.query.inicio || new Date(new Date().setDate(1)).toISOString().split('T')[0];
     const fim = req.query.fim || new Date().toISOString().split('T')[0];
+    const empresa_id = req.query.empresa_id;
+
+    // Proteção: Se não houver empresa_id, não retorna dados
+    if (!empresa_id) return res.status(400).send({ message: "ID da empresa é obrigatório." });
 
     const dataInicio = `${inicio} 00:00:00`;
     const dataFim = `${fim} 23:59:59`;
+    const hoje = new Date().toISOString().split('T')[0];
 
     try {
-        const hoje = new Date().toISOString().split('T')[0];
 
         // Query A: KPIs Fixos de Hoje
         const sqlHoje = `
             SELECT 
-                (SELECT COUNT(*) FROM vendas WHERE DATE(created_at) = ?) as qtd_vendas,
-                (SELECT SUM(total) FROM vendas WHERE DATE(created_at) = ?) as total_faturado,
-                (SELECT AVG(total) FROM vendas WHERE DATE(created_at) = ?) as ticket_medio,
+                (SELECT COUNT(*) FROM vendas WHERE DATE(created_at) = ? AND empresa_id = ?) as qtd_vendas,
+                (SELECT SUM(total) FROM vendas WHERE DATE(created_at) = ? AND empresa_id = ?) as total_faturado,
+                (SELECT AVG(total) FROM vendas WHERE DATE(created_at) = ? AND empresa_id = ?) as ticket_medio,
                 (SELECT IFNULL(SUM(vi.quantidade * vi.custo_unitario), 0) 
                  FROM vendas_itens vi 
                  JOIN vendas v ON vi.venda_id = v.id 
-                 WHERE DATE(v.created_at) = ?) as total_custo`;
+                 WHERE DATE(v.created_at) = ? AND v.empresa_id = ?) as total_custo`;
 
         // Query B: Ranking de Vendedores (Período)
         const sqlVendedores = `
             SELECT vendedor, SUM(total) as total_vendido 
             FROM vendas 
-            WHERE created_at BETWEEN ? AND ?
+            WHERE created_at BETWEEN ? AND ? AND empresa_id = ?
             GROUP BY vendedor 
             ORDER BY total_vendido DESC`;
 
-        // Query C: Top 5 Produtos (Período)
+        // Query C: Top 10 Produtos (Período)
         const sqlTopProdutos = `
             SELECT p.nome, SUM(vi.quantidade) as total_qtd 
             FROM vendas_itens vi 
             JOIN vendas v ON v.id = vi.venda_id
             JOIN produtos p ON p.id = vi.produto_id 
-            WHERE v.created_at BETWEEN ? AND ?
+            WHERE v.created_at BETWEEN ? AND ? AND v.empresa_id = ?
             GROUP BY p.id 
             ORDER BY total_qtd DESC 
-            LIMIT 5`;
+            LIMIT 7`;
 
         // Query D: Evolução (Últimos 7 dias) - Fixa para o gráfico de barras
         const sqlGrafico = `
             SELECT DATE(created_at) as data, SUM(total) as total 
             FROM vendas 
-            WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND empresa_id = ?
             GROUP BY DATE(created_at) 
             ORDER BY data ASC`;
         
+        // Query E: Alerta de Estoque
         const sqlAlertaEstoque = `
             SELECT nome, estoque_atual, estoque_minimo 
             FROM produtos 
-            WHERE estoque_atual <= estoque_minimo AND indicativo_exclusao = FALSE`;
+            WHERE estoque_atual <= estoque_minimo AND indicativo_exclusao = FALSE AND empresa_id = ?`;
 
-         // --- NOVA QUERY: SALDO DO LIVRO CAIXA (PERÍODO) ---
+        // --- SALDO DO LIVRO CAIXA (PERÍODO) ---
+        // Query F: Resumo Financeiro (Integrando com o Livro Caixa)
         const sqlFinanceiro = `
             SELECT 
                 SUM(CASE WHEN tl.tipo = 'Entrada' THEN lc.valor ELSE 0 END) as total_entradas,
                 SUM(CASE WHEN tl.tipo = 'Saída' THEN lc.valor ELSE 0 END) as total_saidas
             FROM fin_livro_caixa lc
             JOIN fin_tipos_lancamento tl ON lc.id_tipo_lancamento = tl.id
-            WHERE lc.indicativo_exclusao = FALSE 
+            WHERE lc.indicativo_exclusao = FALSE AND lc.empresa_id = ?
             AND lc.data_lancamento BETWEEN ? AND ?`;
 
          // Execução das consultas
-        const [resHoje] = await db.promise().query(sqlHoje, [hoje, hoje, hoje, hoje]);
-        const [resVendedores] = await db.promise().query(sqlVendedores, [dataInicio, dataFim]);
-        const [resProdutos] = await db.promise().query(sqlTopProdutos, [dataInicio, dataFim]);
-        const [resGrafico] = await db.promise().query(sqlGrafico);
-        const [resAlerta] = await db.promise().query(sqlAlertaEstoque); // Executa o alerta
-        const [resFinanceiro] = await db.promise().query(sqlFinanceiro, [inicio, fim]);
+        const [resHoje] = await db.promise().query(sqlHoje, [hoje, empresa_id, hoje, empresa_id, hoje, empresa_id, hoje, empresa_id]);
+        const [resVendedores] = await db.promise().query(sqlVendedores, [dataInicio, dataFim, empresa_id]);
+        const [resProdutos] = await db.promise().query(sqlTopProdutos, [dataInicio, dataFim, empresa_id]);
+        const [resGrafico] = await db.promise().query(sqlGrafico, [empresa_id]);
+        const [resAlerta] = await db.promise().query(sqlAlertaEstoque, [empresa_id]); // Executa o alerta
+        const [resFinanceiro] = await db.promise().query(sqlFinanceiro, [empresa_id, inicio, fim]);
 
+        // Retornamos exatamente o objeto que o dashboard.js espera
         res.send({
             hoje: resHoje[0] || { qtd_vendas: 0, total_faturado: 0, ticket_medio: 0, total_custo: 0 },
             ranking: resVendedores,
@@ -363,7 +456,7 @@ app.get('/dashboard-data', async (req, res) => {
         });
 
     } catch (e) {
-        console.error(e);
+        console.error("Erro Dashboard:",e);
         res.status(500).send({ message: "Erro interno no servidor", error: e.message });
     }
 });
@@ -371,25 +464,28 @@ app.get('/dashboard-data', async (req, res) => {
 // --- MÓDULO DE ESTOQUE ---
 
 // 1. Cadastrar Produto (Atualizado para incluir código de barras)
+// --- PRODUTOS: Gravar com o ID da empresa ---
 app.post('/produtos', (req, res) => {
-    const { nome, descricao, preco, custo, estoque_min, imagens, codigo } = req.body;
+    const { nome, descricao, preco, custo, estoque_min, imagens, codigo, empresa_id } = req.body;
     
     const query = `
-        INSERT INTO produtos (nome, descricao, preco_venda, custo_cpv, estoque_minimo, imagens, codigo_barras) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)`;
+        INSERT INTO produtos (nome, descricao, preco_venda, custo_cpv, estoque_minimo, imagens, codigo_barras, empresa_id) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
     // O MySQL 5.7+ suporta JSON nativo. Convertemos o array JS para String JSON.
-    db.query(query, [nome, descricao, preco, custo, estoque_min, JSON.stringify(imagens), codigo], (err, result) => {
+    db.query(query, [nome, descricao, preco, custo, estoque_min, JSON.stringify(imagens), codigo, empresa_id], (err, result) => {
         if (err) return res.status(500).send(err);
         res.send({ message: "Produto cadastrado!", id: result.insertId });
     });
 });
 
-// 2. Listar Produtos (Para o Estoque e PDV) (APENAS OS ATIVOS)
+
+// 2. Listar Produtos (Para o Estoque e PDV) (APENAS OS ATIVOS) - Filtrar por Empresa
 app.get('/produtos', (req, res) => {
     // Adicionamos a cláusula WHERE
-    const sql = "SELECT * FROM produtos WHERE indicativo_exclusao = FALSE ORDER BY nome ASC";
+    const { empresa_id } = req.query; // Recebe o ID via URL: ?empresa_id=1
+    const sql = "SELECT * FROM produtos WHERE empresa_id = ? AND indicativo_exclusao = FALSE ORDER BY nome ASC";
     
-    db.query(sql, (err, results) => {
+    db.query(sql, [empresa_id], (err, results) => {
         if (err) return res.status(500).send(err);
         res.send(results);
     });
@@ -430,7 +526,7 @@ app.delete('/produtos/:id', (req, res) => {
 
 // 4. Dar Entrada no Estoque (Rota Inteligente)
 app.post('/estoque/entrada', (req, res) => {
-    const { produto_id, quantidade, novo_custo } = req.body;
+    const { produto_id, quantidade, novo_custo, empresa_id } = req.body;
 
     db.beginTransaction(err => {
         if (err) return res.status(500).send(err);
@@ -458,9 +554,9 @@ app.post('/estoque/entrada', (req, res) => {
 
             // Passo B: Registrar o histórico (entradas_estoque)
             // Aqui mantemos o null no histórico para saber que naquela entrada o custo não foi informado
-            const sqlInsert = "INSERT INTO entradas_estoque (produto_id, quantidade, custo_unitario) VALUES (?, ?, ?)";
+            const sqlInsert = "INSERT INTO entradas_estoque (produto_id, quantidade, custo_unitario, empresa_id) VALUES (?, ?, ?, ?)";
             
-            db.query(sqlInsert, [produto_id, quantidade, novo_custo], (err, result) => {
+            db.query(sqlInsert, [produto_id, quantidade, novo_custo, empresa_id], (err, result) => {
                 if (err) return db.rollback(() => res.status(500).send(err));
 
                 db.commit(err => {
@@ -474,7 +570,7 @@ app.post('/estoque/entrada', (req, res) => {
 
 // 5. Nova Rota de Venda Unificada (Com Baixa de Estoque e Histórico JSON)
 app.post('/vendas', (req, res) => {
-    const { comprador, vendedor, itens, pagamento, total } = req.body;
+    const { vendedor, comprador, total , desconto_global, itens,  empresa_id, pagamento } = req.body;
     
     // Transformamos para JSON para manter o funcionamento da rota GET /vendas (histórico)
     const itensJSON = JSON.stringify(itens);
@@ -483,8 +579,8 @@ app.post('/vendas', (req, res) => {
         if (err) return res.status(500).send(err);
 
         // A. Criar a Venda na tabela principal (incluindo o campo itens para o histórico)
-        const sqlVenda = "INSERT INTO vendas (comprador, vendedor, itens, pagamento, total) VALUES (?, ?, ?, ?, ?)";
-        db.query(sqlVenda, [comprador, vendedor, itensJSON, pagamento, total], (err, result) => {
+        const sqlVenda = "INSERT INTO vendas (vendedor, comprador, total, desconto_global, itens, empresa_id, pagamento) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        db.query(sqlVenda, [vendedor, comprador, total , desconto_global, itensJSON,  empresa_id, pagamento], (err, result) => {
             if (err) return db.rollback(() => res.status(500).send(err));
             
             const vendaId = result.insertId;
@@ -493,8 +589,8 @@ app.post('/vendas', (req, res) => {
             const updates = itens.map(item => {
                 return new Promise((resolve, reject) => {
                     // Inserir na tabela detalhada
-                    const sqlItem = "INSERT INTO vendas_itens (venda_id, produto_id, quantidade, preco_unitario, custo_unitario) VALUES (?, ?, ?, ?, ?)";
-                    db.query(sqlItem, [vendaId, item.id, item.qty, item.price, item.custo], (erroItem) => {
+                    const sqlItem = "INSERT INTO vendas_itens (venda_id, produto_id, quantidade, preco_unitario, custo_unitario, empresa_id) VALUES (?, ?, ?, ?, ?, ?)";
+                    db.query(sqlItem, [vendaId, item.id, item.qty, item.price, item.custo, empresa_id], (erroItem) => {
                         if (erroItem) return reject(erroItem);
 
                         // Baixar o Estoque Atual
@@ -524,7 +620,7 @@ app.post('/vendas', (req, res) => {
 // --- INTELIGÊNCIA: CURVA ABC ---
 // Rota ABC Corrigida (Substitua a partir da linha 330)
 app.post('/estoque/calcular-abc', (req, res) => {
-    const { dataInicio, dataFim } = req.body;
+    const { dataInicio, dataFim, empresa_id } = req.body;
 
     // Ajuste para pegar do início do primeiro dia até o fim do último dia
     const inicio = `${dataInicio} 00:00:00`;
@@ -535,10 +631,10 @@ app.post('/estoque/calcular-abc', (req, res) => {
         FROM vendas_itens vi
         JOIN vendas v ON v.id = vi.venda_id
         JOIN produtos p ON p.id = vi.produto_id
-        WHERE v.created_at BETWEEN ? AND ?
+        WHERE v.created_at BETWEEN ? AND ? and v.empresa_id = ?
         GROUP BY p.id ORDER BY valor_total_vendido DESC`;
 
-    db.query(sqlRanking, [inicio, fim], (err, produtosVendidos) => {
+    db.query(sqlRanking, [inicio, fim, empresa_id], (err, produtosVendidos) => {
         if (err) return res.status(500).send(err);
 
         // Correção do 'undefined': sempre enviar total: 0 se não houver vendas
@@ -565,17 +661,18 @@ app.post('/estoque/calcular-abc', (req, res) => {
 });
 
 
-// --- FINANCEIRO: TIPOS DE LANÇAMENTO ---
+// --- FINANCEIRO: TIPOS DE LANÇAMENTO (Categorias) ---
 app.get('/fin-tipos', (req, res) => {
-    db.query("SELECT * FROM fin_tipos_lancamento WHERE indicativo_exclusao = FALSE ORDER BY descricao", (err, results) => {
+    const { empresa_id } = req.query;
+    db.query("SELECT * FROM fin_tipos_lancamento WHERE empresa_id = ? AND indicativo_exclusao = FALSE ORDER BY descricao", [empresa_id], (err, results) => {
         if (err) return res.status(500).send(err);
         res.send(results);
     });
 });
 
 app.post('/fin-tipos', (req, res) => {
-    const { descricao, tipo } = req.body;
-    db.query("INSERT INTO fin_tipos_lancamento (descricao, tipo) VALUES (?, ?)", [descricao, tipo], (err) => {
+    const { descricao, tipo, empresa_id } = req.body;
+    db.query("INSERT INTO fin_tipos_lancamento (descricao, tipo, empresa_id) VALUES (?, ?, ?)", [descricao, tipo, empresa_id], (err) => {
         if (err) return res.status(500).send(err);
         res.send({ message: "Tipo cadastrado!" });
     });
@@ -584,16 +681,15 @@ app.post('/fin-tipos', (req, res) => {
 
 app.get('/fin-caixa', (req, res) => {
     // Pegamos as datas da URL. Se não vierem, pegamos o mês atual por padrão.
-    const inicio = req.query.inicio;
-    const fim = req.query.fim;
+    const { inicio, fim, empresa_id } = req.query;
 
     let sql = `
         SELECT lc.*, tl.descricao as tipo_nome, tl.tipo 
         FROM fin_livro_caixa lc
         JOIN fin_tipos_lancamento tl ON lc.id_tipo_lancamento = tl.id
-        WHERE lc.indicativo_exclusao = FALSE`;
+        WHERE lc.empresa_id = ? AND lc.indicativo_exclusao = FALSE`;
     
-    const params = [];
+    const params = [empresa_id];
 
     if (inicio && fim) {
         sql += ` AND lc.data_lancamento BETWEEN ? AND ?`;
@@ -609,15 +705,15 @@ app.get('/fin-caixa', (req, res) => {
 });
 
 app.post('/fin-caixa', (req, res) => {
-    const { id_tipo_lancamento, descricao, data_lancamento, valor, id_usuario } = req.body;
+    const { id_tipo_lancamento, descricao, data_lancamento, valor, id_usuario, empresa_id } = req.body;
 
     // 🛡️ Verificação de segurança no servidor
     if (!valor || valor <= 0) {
         return res.status(400).send({ message: "Valor inválido para lançamento." });
     }
 
-    db.query("INSERT INTO fin_livro_caixa (id_tipo_lancamento, descricao, data_lancamento, valor, id_usuario) VALUES (?,?,?,?,?)",
-    [id_tipo_lancamento, descricao, data_lancamento, valor, id_usuario], (err) => {
+    db.query("INSERT INTO fin_livro_caixa (id_tipo_lancamento, descricao, data_lancamento, valor, id_usuario, empresa_id) VALUES (?,?,?,?,?,?)",
+    [id_tipo_lancamento, descricao, data_lancamento, valor, id_usuario, empresa_id], (err) => {
         if (err) return res.status(500).send(err);
         res.send({ message: "Lançamento efetuado!" });
     });
@@ -625,9 +721,9 @@ app.post('/fin-caixa', (req, res) => {
 
 // Rota para calcular o Saldo Anterior (Tudo antes da data de início)
 app.get('/fin-saldo-anterior', (req, res) => {
-    const dataInicio = req.query.inicio;
+    const { inicio, empresa_id } = req.query;
 
-    if (!dataInicio) return res.status(400).send({ message: "Data de início necessária" });
+    if (!inicio || !empresa_id) return res.status(400).send({ message: "Data de início e identificação da empresa necessários." });
 
     const sql = `
         SELECT 
@@ -635,9 +731,9 @@ app.get('/fin-saldo-anterior', (req, res) => {
             SUM(CASE WHEN tl.tipo = 'Saída' THEN lc.valor ELSE 0 END) as saldo_anterior
         FROM fin_livro_caixa lc
         JOIN fin_tipos_lancamento tl ON lc.id_tipo_lancamento = tl.id
-        WHERE lc.indicativo_exclusao = FALSE AND lc.data_lancamento < ?`;
+        WHERE lc.empresa_id = ? AND lc.indicativo_exclusao = FALSE AND lc.data_lancamento < ?`;
 
-    db.query(sql, [dataInicio], (err, results) => {
+    db.query(sql, [empresa_id, inicio], (err, results) => {
         if (err) return res.status(500).send(err);
         res.send({ saldoAnterior: results[0].saldo_anterior || 0 });
     });
