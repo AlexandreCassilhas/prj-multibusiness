@@ -45,22 +45,64 @@
             <h3 id="modalTitle">Cadastrar Empresa</h3>
             <form id="formEmpresa">
                 <input type="hidden" id="empresaId">
-                <div class="form-group">
-                    <label>Logo da Empresa</label>
-                    <input type="file" id="logoInput" accept="image/*" onchange="previewLogo(this)">
-                    <img id="logoPreview" class="photo-preview" style="display:block; max-width: 150px; border-radius: 8px; margin-top:10px;">
+                <br>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Logo da Empresa</label>
+                        <input type="file" id="logoInput" accept="image/*" onchange="previewLogo(this)">
+                    </div>
+                    <div class="form-group">
+                        <img id="logoPreview" class="photo-preview" style="display:block; max-width: 90px; border-radius: 8px; margin-top:10px;">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>CNPJ</label>
-                    <input type="text" id="empCNPJ" placeholder="00.000.000/0001-00" required>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>CNPJ</label>
+                        <input type="text" id="empCNPJ" placeholder="00.000.000/0001-00" required>
+                    </div>
+                     <div class="form-group">
+                        <label>Home Page (URL)</label>
+                        <input type="url" id="empURL" placeholder="https://www.site.com.br">
+                    </div>
                 </div>
+                
                 <div class="form-group">
                     <label>Razão Social</label>
                     <input type="text" id="empRazao" required>
                 </div>
+
                 <div class="form-group">
                     <label>Nome Fantasia</label>
                     <input type="text" id="empFantasia" required>
+                </div>
+                <hr style="border: 0; border-top: 1px solid #30363d; margin: 20px 0;">
+                <h4 style="color: #8b949e; margin-bottom: 15px;">Endereço</h4>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>CEP</label>
+                        <input type="text" id="empCEP" placeholder="00000-000" maxlength="9" onblur="buscarCep(this.value)">
+                    </div>
+                    <div class="form-group" style="flex: 2;">
+                        <label>Logradouro</label>
+                        <input type="text" id="empLogradouro" placeholder="Rua, Av, etc.">
+                    </div>
+                    <div class="form-group">
+                        <label>Bairro</label>
+                        <input type="text" id="empBairro">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Cidade</label>
+                        <input type="text" id="empCidade">
+                    </div>
+                    <div class="form-group">
+                        <label>Complemento</label>
+                        <input type="text" id="empComplemento" placeholder="Bloco, apto, sala...">
+                    </div>
                 </div>
                 <div class="modal-actions">
                     <button type="submit" class="btn-finish">Salvar</button>

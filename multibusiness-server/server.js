@@ -283,21 +283,49 @@ app.get('/empresas', (req, res) => {
 });
 
 app.post('/empresas', (req, res) => {
-    const { cnpj, razao_social, nome_fantasia, foto_logo } = req.body;
-    const sql = "INSERT INTO empresas (cnpj, razao_social, nome_fantasia, foto_logo) VALUES (?, ?, ?, ?)";
-    db.query(sql, [cnpj, razao_social, nome_fantasia, foto_logo], (err) => {
-        if (err) return res.status(500).send(err);
-        res.send({ message: "Empresa cadastrada com sucesso!" });
+    const { 
+        nome_fantasia, razao_social, cnpj, email, telefone, 
+        url_homepage, cep, logradouro, complemento_endereco, bairro, cidade, foto_logo 
+    } = req.body;
+
+    const query = `INSERT INTO empresas (
+        nome_fantasia, razao_social, cnpj, email, telefone, 
+        url_homepage, cep, logradouro, complemento_endereco, bairro, cidade, foto_logo
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    
+    db.query(query, [
+        nome_fantasia, razao_social, cnpj, email, telefone, 
+        url_homepage, cep, logradouro, complemento_endereco, bairro, cidade, foto_logo
+    ], (err, result) => {
+        if (err) {
+            console.error('ERRO CRÍTICO NO BANCO:', err.code);
+            return res.status(500).send({ 
+                message: "Erro ao salvar empresa. O arquivo de imagem pode ser grande demais para o banco de dados.",
+                error: err.code
+            });
+        }
+        res.send({ message: "Empresa cadastrada!", id: result.insertId });
     });
 });
 
 app.put('/empresas/:id', (req, res) => {
     const { id } = req.params;
-    const { cnpj, razao_social, nome_fantasia, foto_logo } = req.body;
-    const sql = "UPDATE empresas SET cnpj = ?, razao_social = ?, nome_fantasia = ?, foto_logo = ? WHERE id = ?";
-    db.query(sql, [cnpj, razao_social, nome_fantasia, foto_logo, id], (err) => {
+    const { 
+        nome_fantasia, razao_social, cnpj, email, telefone, 
+        url_homepage, cep, logradouro, complemento_endereco, bairro, cidade, foto_logo 
+    } = req.body;
+
+    const query = `UPDATE empresas SET 
+        nome_fantasia=?, razao_social=?, cnpj=?, email=?, telefone=?, 
+        url_homepage=?, cep=?, logradouro=?, complemento_endereco=?, bairro=?, cidade=?, foto_logo=? 
+        WHERE id=?`;
+
+    db.query(query, [
+        nome_fantasia, razao_social, cnpj, email, telefone, 
+        url_homepage, cep, logradouro, complemento_endereco, bairro, cidade, foto_logo, id
+    ], (err, result) => {
         if (err) return res.status(500).send(err);
-        res.send({ message: "Dados da empresa atualizados!" });
+        res.send({ message: "Empresa atualizada com sucesso!" });
     });
 });
 
